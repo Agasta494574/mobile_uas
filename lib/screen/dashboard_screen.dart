@@ -4,7 +4,7 @@ import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.da
 
 import 'package:mobile_uas/screen/login_screen.dart';
 import 'package:mobile_uas/screen/dashboard_home.dart';
-import 'package:mobile_uas/screen/produk_screen.dart';
+import 'package:mobile_uas/screen/produk/produk_screen.dart';
 import 'package:mobile_uas/screen/transaksi_screen.dart';
 import 'package:mobile_uas/screen/laporan_screen.dart';
 import 'package:mobile_uas/screen/akun_screen.dart';

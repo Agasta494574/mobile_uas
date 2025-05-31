@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../model/produk.dart';
+import '../model/produk.dart'; //
 
 class ProdukService {
   final supabase = Supabase.instance.client;
@@ -17,7 +17,13 @@ class ProdukService {
     await supabase.from('produk').insert(produk.toMap());
   }
 
-  Future<void> updateStok(String id, int stokBaru) async {
-    await supabase.from('produk').update({'stok': stokBaru}).eq('id', id);
+  Future<void> updateProduk(Produk produk) async {
+    // Tambahkan update
+    await supabase.from('produk').update(produk.toMap()).eq('id', produk.id);
+  }
+
+  Future<void> hapusProduk(String id) async {
+    // Tambahkan delete
+    await supabase.from('produk').delete().eq('id', id);
   }
 }
