@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
+import 'package:provider/provider.dart'; // Tambahkan import provider
 
 import 'package:mobile_uas/screen/login_screen.dart';
 import 'package:mobile_uas/screen/dashboard_home.dart';
@@ -8,6 +9,7 @@ import 'package:mobile_uas/screen/produk_screen.dart';
 import 'package:mobile_uas/screen/transaksi_screen.dart';
 import 'package:mobile_uas/screen/laporan_screen.dart';
 import 'package:mobile_uas/screen/akun_screen.dart';
+import 'package:mobile_uas/providers/auth_provider.dart'; // Tambahkan import AuthProvider
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -42,14 +44,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     const AkunScreen(), // 4
   ];
 
-  void _logout() {
-    Get.offAll(() => const LoginScreen());
-    Get.snackbar(
-      'Logout',
-      'Anda berhasil logout',
-      backgroundColor: Colors.green.shade300,
-      snackPosition: SnackPosition.BOTTOM,
-    );
+  void _logout() async {
+    // Ubah menjadi async
+    try {
+      // Panggil signOut dari AuthProvider
+      await Provider.of<AuthProvider>(context, listen: false).signOut();
+      Get.offAll(() => const LoginScreen());
+      Get.snackbar(
+        'Logout',
+        'Anda berhasil logout',
+        backgroundColor: Colors.green.shade300,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error Logout',
+        'Terjadi kesalahan saat logout: $e',
+        backgroundColor: Colors.red.shade200,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
   }
 
   @override

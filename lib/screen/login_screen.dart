@@ -1,8 +1,11 @@
+// lib/screen/login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile_uas/screen/register_screen.dart';
 import 'package:mobile_uas/screen/dashboard_screen.dart';
+import 'package:mobile_uas/providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,13 +15,14 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _identityController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   bool _obscureText = true;
 
   void _login() async {
-    String email = _identityController.text.trim();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    String email = _emailController.text.trim();
     String password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
@@ -26,22 +30,48 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // Tampilkan snackbar dulu
-    Get.snackbar(
-      'Sukses',
-      'Login berhasil! Mengalihkan ke dashboard...',
-      backgroundColor: Colors.green.shade200,
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 2),
-    );
+    try {
+      bool success = await authProvider.signIn(
+        email,
+        password,
+      ); // Menangkap boolean return
+      if (success) {
+        Get.offAll(() => const DashboardScreen());
+        Get.snackbar(
+          'Sukses',
+          'Login berhasil!',
+          backgroundColor: Colors.green.shade200,
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      } else {
+        Get.snackbar(
+          'Login Gagal',
+          authProvider.errorMessage ?? 'Email atau password salah.',
+          backgroundColor: Colors.red.shade200,
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Login Gagal',
+        authProvider.errorMessage ?? 'Terjadi kesalahan saat login.',
+        backgroundColor: Colors.red.shade200,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
 
-    // Tunggu 2 detik sebelum pindah
-    await Future.delayed(const Duration(seconds: 2));
-    Get.offAll(() => const DashboardScreen());
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -83,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       children: [
                         TextField(
-                          controller: _identityController,
+                          controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.person),
@@ -121,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: _login,
+                            onPressed: authProvider.isLoading ? null : _login,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blueAccent,
                               padding: const EdgeInsets.symmetric(
@@ -133,15 +163,20 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               elevation: 6,
                             ),
-                            child: const Text(
-                              'LOGIN',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
-                              ),
-                            ),
+                            child:
+                                authProvider.isLoading
+                                    ? const CircularProgressIndicator(
+                                      color: Colors.white,
+                                    )
+                                    : const Text(
+                                      'LOGIN',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
                           ),
                         ),
                         const SizedBox(height: 12),

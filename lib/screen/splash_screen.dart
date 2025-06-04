@@ -39,8 +39,8 @@ class _SplashScreenState extends State<SplashScreen> {
             children: [
               Image.asset(
                 'assets/images/TokoBabe3D.png',
-                width: 400,
-                height: 400,
+                width: MediaQuery.of(context).size.width * 0.6,
+                height: MediaQuery.of(context).size.width * 0.6,
               ),
               const SizedBox(height: 20),
               const Text(
