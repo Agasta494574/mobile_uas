@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:mobile_uas/providers/auth_provider.dart';
-import 'package:mobile_uas/screen/dashboard_screen.dart';
+import 'package:mobile_uas/providers/auth_provider.dart'; // Pastikan path ini benar
+import 'package:mobile_uas/screen/login_screen.dart'; // Mengubah navigasi kembali ke LoginScreen
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -14,33 +14,57 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  // final TextEditingController _nameController = TextEditingController(); // <-- HAPUS BARIS INI
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
 
   bool _obscureText = true;
+  bool _obscureTextConfirm = true;
 
   void _register() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    String username = _usernameController.text.trim();
     String email = _emailController.text.trim();
     String password = _passwordController.text.trim();
-    // String name = _nameController.text.trim(); // <-- HAPUS BARIS INI
+    String confirmPassword = _confirmPasswordController.text.trim();
+    String phone = _phoneController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      // <-- SESUAIKAN KONDISI VALIDASI INI
+    if (username.isEmpty ||
+        email.isEmpty ||
+        password.isEmpty ||
+        confirmPassword.isEmpty ||
+        phone.isEmpty) {
       Get.snackbar(
         'Error',
-        'Email dan Password harus diisi.',
-      ); // <-- SESUAIKAN PESAN ERROR
+        'Semua bidang harus diisi.',
+        backgroundColor: Colors.red.shade200,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      Get.snackbar(
+        'Error',
+        'Konfirmasi password tidak cocok.',
+        backgroundColor: Colors.red.shade200,
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return;
     }
 
     try {
-      // Panggil signUp KINI TANPA ARGUMEN 'name'
+      // Pastikan metode signUp di AuthProvider Anda dapat menerima username dan phone.
+      // (Lihat contoh modifikasi AuthProvider di penjelasan sebelumnya)
       bool success = await authProvider.signUp(
         email,
         password,
-      ); // <-- HAPUS ARGUMEN 'name'
+        username,
+        phone,
+      );
 
       if (success) {
         Get.snackbar(
@@ -49,7 +73,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           backgroundColor: Colors.green.shade300,
           snackPosition: SnackPosition.BOTTOM,
         );
-        Get.offAll(() => const DashboardScreen());
+        // Setelah registrasi, alihkan ke LoginScreen agar pengguna bisa login
+        Get.offAll(() => const LoginScreen());
       } else {
         Get.snackbar(
           'Registrasi Gagal',
@@ -61,7 +86,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } catch (e) {
       Get.snackbar(
         'Registrasi Gagal',
-        authProvider.errorMessage ?? 'Terjadi kesalahan saat pendaftaran.',
+        authProvider.errorMessage ?? 'Terjadi kesalahan saat pendaftaran: $e',
         backgroundColor: Colors.red.shade200,
         snackPosition: SnackPosition.BOTTOM,
       );
@@ -70,9 +95,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
-    // _nameController.dispose(); // <-- HAPUS BARIS INI
+    _confirmPasswordController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -116,20 +143,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     padding: const EdgeInsets.all(24),
                     child: Column(
                       children: [
-                        // HAPUS TextField untuk 'Nama Lengkap'
-                        /*
                         TextField(
-                          controller: _nameController,
+                          controller: _usernameController,
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.person),
-                            labelText: 'Nama Lengkap',
+                            labelText: 'Username',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                         ),
                         const SizedBox(height: 16),
-                        */
                         TextField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
@@ -162,6 +186,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   _obscureText = !_obscureText;
                                 });
                               },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _confirmPasswordController,
+                          obscureText: _obscureTextConfirm,
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(Icons.lock_reset),
+                            labelText: 'Konfirmasi Password',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureTextConfirm
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscureTextConfirm = !_obscureTextConfirm;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(Icons.phone),
+                            labelText: 'Nomor Telepon',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                         ),

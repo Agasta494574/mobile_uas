@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as SupabaseSdk;
 import '../service/auth_service.dart';
-import '../model/user.dart' as AppUser; // <-- Aliaskan model User Anda
+import '../model/user.dart' as AppUser; // Aliaskan model User Anda
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -71,18 +71,28 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // Metode untuk Register
-  // KINI HANYA MENERIMA EMAIL DAN PASSWORD
-  Future<bool> signUp(String email, String password) async {
-    // <-- HAPUS PARAMETER 'name'
+  // KINI MENERIMA EMAIL, PASSWORD, USERNAME, DAN PHONE
+  Future<bool> signUp(
+    String email,
+    String password,
+    String username,
+    String phone,
+  ) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
     try {
+      // Teruskan username dan phone ke AuthService.signUp
       final SupabaseSdk.User? supabaseUser = await _authService.signUp(
         email,
         password,
-      ); // <-- HAPUS ARGUMEN 'name'
+        username,
+        phone,
+      );
       if (supabaseUser != null) {
+        // Setelah registrasi berhasil, Supabase secara otomatis masuk.
+        // Anda mungkin ingin segera memuat profil pengguna di sini.
+        _currentUser = await _authService.getCurrentUserWithProfile();
         return true;
       }
       _errorMessage = "Registrasi gagal, coba lagi.";
@@ -108,6 +118,9 @@ class AuthProvider extends ChangeNotifier {
         password,
       );
       if (supabaseUser != null) {
+        _currentUser =
+            await _authService
+                .getCurrentUserWithProfile(); // Pastikan profil dimuat setelah login
         return true;
       }
       _errorMessage = "Email atau password salah.";
