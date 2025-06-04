@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
-import 'package:provider/provider.dart'; // Tambahkan import provider
+import 'package:provider/provider.dart';
 
 import 'package:mobile_uas/screen/login_screen.dart';
 import 'package:mobile_uas/screen/dashboard_home.dart';
@@ -9,7 +9,7 @@ import 'package:mobile_uas/screen/produk_screen.dart';
 import 'package:mobile_uas/screen/transaksi_screen.dart';
 import 'package:mobile_uas/screen/laporan_screen.dart';
 import 'package:mobile_uas/screen/akun_screen.dart';
-import 'package:mobile_uas/providers/auth_provider.dart'; // Tambahkan import AuthProvider
+import 'package:mobile_uas/providers/auth_provider.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -45,23 +45,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
   ];
 
   void _logout() async {
-    // Ubah menjadi async
     try {
-      // Panggil signOut dari AuthProvider
       await Provider.of<AuthProvider>(context, listen: false).signOut();
-      Get.offAll(() => const LoginScreen());
-      Get.snackbar(
-        'Logout',
-        'Anda berhasil logout',
-        backgroundColor: Colors.green.shade300,
-        snackPosition: SnackPosition.BOTTOM,
+      // Gunakan ScaffoldMessenger untuk snackbar guna menghindari masalah tata letak
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Anda berhasil logout'),
+          backgroundColor: Colors.green.shade300,
+          behavior: SnackBarBehavior.floating, // Tambahkan baris ini
+        ),
       );
+      Get.offAll(() => const LoginScreen());
     } catch (e) {
-      Get.snackbar(
-        'Error Logout',
-        'Terjadi kesalahan saat logout: $e',
-        backgroundColor: Colors.red.shade200,
-        snackPosition: SnackPosition.BOTTOM,
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Terjadi kesalahan saat logout: $e'),
+          backgroundColor: Colors.red.shade200,
+          behavior: SnackBarBehavior.floating, // Tambahkan baris ini
+        ),
       );
     }
   }

@@ -63,8 +63,8 @@ class _TransaksiScreenState extends State<TransaksiScreen> {
 
     if (jumlah > _produkTerpilih!.stok) {
       Get.snackbar(
-        'Error',
-        'Stok tidak cukup. Stok tersedia: ${_produkTerpilih!.stok}',
+        'Maaf',
+        'Stok tidak cukup.  ${_produkTerpilih!.stok}',
         backgroundColor: Colors.orange.shade200,
         snackPosition: SnackPosition.BOTTOM,
       );

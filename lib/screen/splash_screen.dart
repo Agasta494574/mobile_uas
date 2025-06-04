@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:mobile_uas/screen/login_screen.dart'; // nanti buat file ini
 
 class SplashScreen extends StatefulWidget {
@@ -14,10 +15,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
 
     Future.delayed(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
+      Get.offAll(() => const LoginScreen());
     });
   }
 
