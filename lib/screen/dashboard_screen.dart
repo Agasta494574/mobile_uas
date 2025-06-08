@@ -10,6 +10,8 @@ import 'package:mobile_uas/screen/transaksi_screen.dart';
 import 'package:mobile_uas/screen/laporan_screen.dart';
 import 'package:mobile_uas/screen/akun_screen.dart';
 import 'package:mobile_uas/providers/auth_provider.dart';
+import 'package:mobile_uas/providers/produk_provider.dart'; // Import ProdukProvider
+import 'package:mobile_uas/model/produk.dart'; // Import Produk model
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -20,6 +22,8 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 2; // Home di tengah (index ke-2)
+
+  List<Produk> _lowStockProduk = []; // Daftar baru untuk produk stok rendah
 
   final iconList = <IconData>[
     Icons.inventory_2, // Produk
@@ -44,25 +48,78 @@ class _DashboardScreenState extends State<DashboardScreen> {
     const AkunScreen(), // 4
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    // Mendengarkan perubahan di ProdukProvider untuk memeriksa stok rendah
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ProdukProvider>(
+        context,
+        listen: false,
+      ).addListener(_checkLowStock);
+      _checkLowStock(); // Pengecekan awal
+    });
+  }
+
+  @override
+  void dispose() {
+    Provider.of<ProdukProvider>(
+      context,
+      listen: false,
+    ).removeListener(_checkLowStock);
+    super.dispose();
+  }
+
+  void _checkLowStock() {
+    final produkProvider = Provider.of<ProdukProvider>(context, listen: false);
+    final currentLowStock =
+        produkProvider.produkList
+            .where(
+              (produk) => produk.stok <= produk.stokMinimum,
+            ) // Memfilter produk yang stoknya menipis
+            .toList();
+
+    // Hanya tampilkan snackbar jika ada item stok rendah baru atau jika daftar berubah
+    if (currentLowStock.length != _lowStockProduk.length ||
+        !_lowStockProduk.every(currentLowStock.contains)) {
+      setState(() {
+        _lowStockProduk = currentLowStock;
+      });
+
+      if (_lowStockProduk.isNotEmpty) {
+        for (var produk in _lowStockProduk) {
+          Get.snackbar(
+            'Stok Menipis!',
+            'Stok ${produk.nama} (${produk.kodeProduk}) kini ${produk.stok} ${produk.satuan}. Segera restock!',
+            backgroundColor: Colors.orange.shade300,
+            snackPosition: SnackPosition.TOP,
+            duration: const Duration(seconds: 5),
+            icon: const Icon(Icons.warning_amber, color: Colors.white),
+          );
+        }
+      }
+    }
+  }
+
   void _logout() async {
     try {
-      await Provider.of<AuthProvider>(context, listen: false).signOut();
-      // Gunakan ScaffoldMessenger untuk snackbar guna menghindari masalah tata letak
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Anda berhasil logout'),
-          backgroundColor: Colors.green.shade300,
-          behavior: SnackBarBehavior.floating, // Tambahkan baris ini
-        ),
-      );
+      await Provider.of<AuthProvider>(
+        context,
+        listen: false,
+      ).signOut(); // Memanggil signOut dari AuthProvider
       Get.offAll(() => const LoginScreen());
+      Get.snackbar(
+        'Logout',
+        'Anda berhasil logout',
+        backgroundColor: Colors.green.shade300,
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Terjadi kesalahan saat logout: $e'),
-          backgroundColor: Colors.red.shade200,
-          behavior: SnackBarBehavior.floating, // Tambahkan baris ini
-        ),
+      Get.snackbar(
+        'Error Logout',
+        'Terjadi kesalahan saat logout: $e',
+        backgroundColor: Colors.red.shade200,
+        snackPosition: SnackPosition.BOTTOM,
       );
     }
   }
@@ -73,7 +130,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: Text(titles[_currentIndex]),
         actions:
-            _currentIndex == 4
+            _currentIndex ==
+                    4 // Hanya tampilkan tombol logout di AkunScreen
                 ? [
                   IconButton(
                     icon: const Icon(Icons.logout),
@@ -83,7 +141,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ]
                 : null,
       ),
-      body: pages[_currentIndex],
+      body: IndexedStack(
+        // Gunakan IndexedStack untuk mempertahankan status halaman
+        index: _currentIndex,
+        children: pages,
+      ),
       floatingActionButton: SizedBox(
         width: 56,
         height: 56,
