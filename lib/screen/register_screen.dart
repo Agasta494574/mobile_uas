@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:mobile_uas/providers/auth_provider.dart'; // Pastikan path ini benar
-import 'package:mobile_uas/screen/login_screen.dart'; // Mengubah navigasi kembali ke LoginScreen
+import 'package:mobile_uas/providers/auth_provider.dart';
+import 'package:mobile_uas/screen/login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -57,14 +57,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     try {
-      // Pastikan metode signUp di AuthProvider Anda dapat menerima username dan phone.
-      // (Lihat contoh modifikasi AuthProvider di penjelasan sebelumnya)
       bool success = await authProvider.signUp(
         email,
         password,
         username,
         phone,
       );
+
+      if (!mounted) return;
 
       if (success) {
         Get.snackbar(
@@ -73,7 +73,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           backgroundColor: Colors.green.shade300,
           snackPosition: SnackPosition.BOTTOM,
         );
-        // Setelah registrasi, alihkan ke LoginScreen agar pengguna bisa login
         Get.offAll(() => const LoginScreen());
       } else {
         Get.snackbar(
@@ -84,6 +83,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
+
       Get.snackbar(
         'Registrasi Gagal',
         authProvider.errorMessage ?? 'Terjadi kesalahan saat pendaftaran: $e',

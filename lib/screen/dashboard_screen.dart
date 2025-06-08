@@ -1,3 +1,4 @@
+// lib/screen/dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
@@ -10,8 +11,6 @@ import 'package:mobile_uas/screen/transaksi_screen.dart';
 import 'package:mobile_uas/screen/laporan_screen.dart';
 import 'package:mobile_uas/screen/akun_screen.dart';
 import 'package:mobile_uas/providers/auth_provider.dart';
-import 'package:mobile_uas/providers/produk_provider.dart'; // Import ProdukProvider
-import 'package:mobile_uas/model/produk.dart'; // Import Produk model
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -23,8 +22,6 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 2; // Home di tengah (index ke-2)
 
-  List<Produk> _lowStockProduk = []; // Daftar baru untuk produk stok rendah
-
   final iconList = <IconData>[
     Icons.inventory_2, // Produk
     Icons.receipt_long, // Transaksi
@@ -32,81 +29,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Icons.person, // Akun
   ];
 
-  final List<String> titles = [
+  final List<String> appBarTitles = [
     'Produk',
     'Transaksi',
-    'Toko Kelontong Makmur',
+    'Moodev', // Untuk halaman DashboardHome
     'Laporan',
     'Akun',
   ];
 
   final List<Widget> pages = [
-    ProdukScreen(), // 0
+    const ProdukScreen(), // 0
     const TransaksiScreen(), // 1
     const DashboardHome(), // 2
     const LaporanScreen(), // 3
     const AkunScreen(), // 4
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    // Mendengarkan perubahan di ProdukProvider untuk memeriksa stok rendah
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ProdukProvider>(
-        context,
-        listen: false,
-      ).addListener(_checkLowStock);
-      _checkLowStock(); // Pengecekan awal
-    });
-  }
-
-  @override
-  void dispose() {
-    Provider.of<ProdukProvider>(
-      context,
-      listen: false,
-    ).removeListener(_checkLowStock);
-    super.dispose();
-  }
-
-  void _checkLowStock() {
-    final produkProvider = Provider.of<ProdukProvider>(context, listen: false);
-    final currentLowStock =
-        produkProvider.produkList
-            .where(
-              (produk) => produk.stok <= produk.stokMinimum,
-            ) // Memfilter produk yang stoknya menipis
-            .toList();
-
-    // Hanya tampilkan snackbar jika ada item stok rendah baru atau jika daftar berubah
-    if (currentLowStock.length != _lowStockProduk.length ||
-        !_lowStockProduk.every(currentLowStock.contains)) {
-      setState(() {
-        _lowStockProduk = currentLowStock;
-      });
-
-      if (_lowStockProduk.isNotEmpty) {
-        for (var produk in _lowStockProduk) {
-          Get.snackbar(
-            'Stok Menipis!',
-            'Stok ${produk.nama} (${produk.kodeProduk}) kini ${produk.stok} ${produk.satuan}. Segera restock!',
-            backgroundColor: Colors.orange.shade300,
-            snackPosition: SnackPosition.TOP,
-            duration: const Duration(seconds: 5),
-            icon: const Icon(Icons.warning_amber, color: Colors.white),
-          );
-        }
-      }
-    }
-  }
-
   void _logout() async {
     try {
-      await Provider.of<AuthProvider>(
-        context,
-        listen: false,
-      ).signOut(); // Memanggil signOut dari AuthProvider
+      await Provider.of<AuthProvider>(context, listen: false).signOut();
+      if (!mounted) return;
+
       Get.offAll(() => const LoginScreen());
       Get.snackbar(
         'Logout',
@@ -115,6 +58,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e) {
+      if (!mounted) return;
+
       Get.snackbar(
         'Error Logout',
         'Terjadi kesalahan saat logout: $e',
@@ -128,10 +73,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(titles[_currentIndex]),
+        title: Text(appBarTitles[_currentIndex]),
+        backgroundColor: Colors.teal, // Warna AppBar menjadi Teal
+        foregroundColor: Colors.white, // Warna teks dan ikon AppBar putih
+        elevation: 0,
         actions:
-            _currentIndex ==
-                    4 // Hanya tampilkan tombol logout di AkunScreen
+            _currentIndex == 4
                 ? [
                   IconButton(
                     icon: const Icon(Icons.logout),
@@ -139,22 +86,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     tooltip: 'Logout',
                   ),
                 ]
-                : null,
+                : (_currentIndex == 2
+                    ? [
+                      IconButton(
+                        icon: const Icon(Icons.notifications_none),
+                        onPressed: () {
+                          Get.snackbar(
+                            'Notifikasi',
+                            'Fitur notifikasi belum tersedia.',
+                            backgroundColor:
+                                Colors
+                                    .teal
+                                    .shade200, // Notifikasi background teal muda
+                            snackPosition: SnackPosition.TOP,
+                          );
+                        },
+                        tooltip: 'Notifikasi',
+                      ),
+                    ]
+                    : null),
       ),
-      body: IndexedStack(
-        // Gunakan IndexedStack untuk mempertahankan status halaman
-        index: _currentIndex,
-        children: pages,
-      ),
+      body: pages[_currentIndex],
       floatingActionButton: SizedBox(
         width: 56,
         height: 56,
         child: FloatingActionButton(
           shape: const CircleBorder(),
           onPressed: () => setState(() => _currentIndex = 2), // Home
-          backgroundColor: Colors.green,
+          backgroundColor: Colors.teal, // Warna FAB menjadi Teal
           elevation: 8,
-          child: const Icon(Icons.home, size: 28),
+          child: const Icon(Icons.home, size: 28, color: Colors.white),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -166,8 +127,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         leftCornerRadius: 0,
         rightCornerRadius: 0,
         activeColor: Colors.white,
-        inactiveColor: Colors.grey,
-        backgroundColor: Colors.teal,
+        inactiveColor: Colors.teal.shade100, // Warna ikon tidak aktif teal muda
+        backgroundColor: Colors.teal, // Warna background BottomNav menjadi Teal
         iconSize: 28,
         onTap: (index) {
           int actualIndex = index < 2 ? index : index + 1;
