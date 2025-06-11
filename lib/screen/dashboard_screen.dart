@@ -21,12 +21,13 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 2; // Home di tengah (index ke-2)
+  bool _isHomeTapped = false; // Variabel untuk mengontrol animasi tap pada Home
 
   final iconList = <IconData>[
-    Icons.inventory_2, // Produk
-    Icons.receipt_long, // Transaksi
-    Icons.bar_chart, // Laporan
-    Icons.person, // Akun
+    Icons.inventory_2, // Produk (index 0)
+    Icons.receipt_long, // Transaksi (index 1)
+    Icons.bar_chart, // Laporan (index 2)
+    Icons.person, // Akun (index 3)
   ];
 
   final List<String> appBarTitles = [
@@ -40,7 +41,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final List<Widget> pages = [
     const ProdukScreen(), // 0
     const TransaksiScreen(), // 1
-    const DashboardHome(), // 2
+    const DashboardHome(), // 2 (Home screen)
     const LaporanScreen(), // 3
     const AkunScreen(), // 4
   ];
@@ -112,16 +113,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
         height: 56,
         child: FloatingActionButton(
           shape: const CircleBorder(),
-          onPressed: () => setState(() => _currentIndex = 2), // Home
+          onPressed: () {
+            setState(() {
+              _currentIndex = 2; // Set index ke Home
+              _isHomeTapped = true; // Aktifkan animasi tap
+              // Nonaktifkan animasi tap setelah sedikit waktu
+              Future.delayed(const Duration(milliseconds: 200), () {
+                if (mounted) {
+                  setState(() {
+                    _isHomeTapped = false;
+                  });
+                }
+              });
+            });
+          },
           backgroundColor: Colors.teal, // Warna FAB menjadi Teal
           elevation: 8,
-          child: const Icon(Icons.home, size: 28, color: Colors.white),
+          child: AnimatedScale(
+            // Wrap dengan AnimatedScale
+            duration: const Duration(milliseconds: 150), // Durasi animasi
+            scale: _isHomeTapped ? 1.1 : 1.0, // Skala ikon saat ditekan
+            child: Icon(
+              Icons.home,
+              size: 28,
+              color:
+                  _currentIndex == 2
+                      ? Colors.white
+                      : Colors
+                          .teal
+                          .shade100, // Warna ikon berubah berdasarkan _currentIndex
+            ),
+          ),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: AnimatedBottomNavigationBar(
         icons: iconList,
-        activeIndex: _currentIndex < 2 ? _currentIndex : _currentIndex - 1,
+        activeIndex:
+            _currentIndex == 0
+                ? 0 // Produk
+                : _currentIndex == 1
+                ? 1 // Transaksi
+                : _currentIndex == 3
+                ? 2 // Laporan (mapped to index 2 in iconList)
+                : _currentIndex == 4
+                ? 3 // Akun (mapped to index 3 in iconList)
+                : -1, // Tidak ada ikon aktif di BottomNav ketika di halaman Home
         gapLocation: GapLocation.center,
         notchSmoothness: NotchSmoothness.sharpEdge,
         leftCornerRadius: 0,
@@ -132,7 +169,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         iconSize: 28,
         onTap: (index) {
           int actualIndex = index < 2 ? index : index + 1;
-          setState(() => _currentIndex = actualIndex);
+          setState(() {
+            _currentIndex = actualIndex;
+            // Pastikan _isHomeTapped false ketika ikon lain ditekan
+            _isHomeTapped = false;
+          });
         },
       ),
     );
