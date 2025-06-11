@@ -1,6 +1,5 @@
 // lib/model/transaksi_detail.dart
 class TransaksiDetail {
-  // <--- GANTI NAMA KELAS INI JIKA SEBELUMNYA TransactionDetail
   final String id;
   final String transaksiId;
   final String produkId;
@@ -8,9 +7,10 @@ class TransaksiDetail {
   final double subtotal;
   final String productName;
   final double productPricePerUnit;
+  final double? productBuyingPrice; // Tambahkan ini jika belum ada
+  final DateTime createdAt; // <--- BARU
 
   TransaksiDetail({
-    // <--- GANTI NAMA KONSTRUKTOR INI JIKA SEBELUMNYA TransactionDetail
     required this.id,
     required this.transaksiId,
     required this.produkId,
@@ -18,12 +18,12 @@ class TransaksiDetail {
     required this.subtotal,
     required this.productName,
     required this.productPricePerUnit,
+    this.productBuyingPrice, // Tambahkan di konstruktor
+    required this.createdAt, // <--- BARU
   });
 
   factory TransaksiDetail.fromJson(Map<String, dynamic> json) {
-    // <--- GANTI NAMA FACTORY INI
     return TransaksiDetail(
-      // <--- GANTI NAMA KELAS INI
       id: json['id'] as String,
       transaksiId: json['transaksi_id'] as String,
       produkId: json['produk_id'] as String,
@@ -35,6 +35,11 @@ class TransaksiDetail {
           json['produk'] != null
               ? (json['produk']['harga_jual'] as num).toDouble()
               : 0.0,
+      productBuyingPrice:
+          json['produk'] != null
+              ? (json['produk']['harga_beli'] as num).toDouble()
+              : null, // Tambahkan ini
+      createdAt: DateTime.parse(json['created_at'] as String), // <--- BARU
     );
   }
 
@@ -45,6 +50,7 @@ class TransaksiDetail {
       'produk_id': produkId,
       'jumlah': jumlah,
       'subtotal': subtotal,
+      'created_at': createdAt.toIso8601String(), // <--- BARU
     };
   }
 }

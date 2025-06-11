@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mobile_uas/providers/stock_movment_provider.dart';
 import 'package:mobile_uas/screen/register_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_uas/screen/splash_screen.dart';
@@ -32,6 +33,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ProdukProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => TransaksiProvider()),
+        ChangeNotifierProvider(create: (_) => StockMovementProvider()),
       ],
       child: const MyApp(),
     ),

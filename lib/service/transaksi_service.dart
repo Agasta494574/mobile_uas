@@ -1,4 +1,4 @@
-// lib/service/transaction_service.dart
+// lib/service/transaksi_service.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../model/transaksi.dart';
 import '../model/transaksi_detail.dart';
@@ -71,7 +71,9 @@ class TransactionService {
       // Lakukan JOIN dengan tabel 'produk' untuk mendapatkan nama dan harga jual produk
       final response = await _supabase
           .from('transaksi_detail')
-          .select('*, produk(nama, harga_jual)') // Join ke tabel produk
+          .select(
+            '*, produk(nama, harga_jual, harga_beli)',
+          ) // Join ke tabel produk, ambil harga_beli juga
           .eq('transaksi_id', transactionId)
           .order('id', ascending: true); // Urutkan berdasarkan ID detail
 
@@ -87,6 +89,60 @@ class TransactionService {
     } catch (e) {
       print('Error getTransactionDetails: $e');
       throw Exception('Gagal mengambil detail transaksi: $e');
+    }
+  }
+
+  // --- Metode Baru untuk Dashboard Home ---
+
+  Future<double> getOmsetToday() async {
+    try {
+      final today = DateTime.now().toIso8601String().substring(
+        0,
+        10,
+      ); // Format YYYY-MM-DD
+      final response = await _supabase
+          .from('transaksi')
+          .select('total_bayar')
+          .gte('tanggal', '$today 00:00:00')
+          .lte('tanggal', '$today 23:59:59');
+
+      double totalOmset = 0;
+      for (var item in response) {
+        totalOmset += (item['total_bayar'] as num).toDouble();
+      }
+      return totalOmset;
+    } catch (e) {
+      print('Error fetching omset today: $e');
+      return 0.0;
+    }
+  }
+
+  Future<double> getKeuntunganToday() async {
+    try {
+      final today = DateTime.now().toIso8601String().substring(0, 10);
+      // Ambil transaksi detail hari ini dengan join ke produk untuk harga beli dan jual
+      final response = await _supabase
+          .from('transaksi_detail')
+          .select(
+            'jumlah, produk(harga_jual, harga_beli)',
+          ) // Ambil jumlah, dan harga jual/beli dari produk
+          .gte(
+            'created_at',
+            '$today 00:00:00',
+          ) // created_at dari transaksi_detail
+          .lte('created_at', '$today 23:59:59');
+
+      double totalKeuntungan = 0;
+      for (var item in response) {
+        final jumlah = item['jumlah'] as int;
+        final hargaJual = (item['produk']['harga_jual'] as num).toDouble();
+        final hargaBeli = (item['produk']['harga_beli'] as num).toDouble();
+        totalKeuntungan += (hargaJual - hargaBeli) * jumlah;
+      }
+      return totalKeuntungan;
+    } catch (e) {
+      print('Error fetching keuntungan today: $e');
+      return 0.0;
     }
   }
 }
