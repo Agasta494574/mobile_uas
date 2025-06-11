@@ -31,18 +31,18 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     try {
-      bool success = await authProvider.signIn(
-        email,
-        password,
-      ); // Menangkap boolean return
+      bool success = await authProvider.signIn(email, password);
+
+      if (!mounted) return;
+
       if (success) {
-        Get.offAll(() => const DashboardScreen());
         Get.snackbar(
           'Sukses',
           'Login berhasil!',
           backgroundColor: Colors.green.shade200,
           snackPosition: SnackPosition.BOTTOM,
         );
+        Get.offAll(() => const DashboardScreen());
       } else {
         Get.snackbar(
           'Login Gagal',
@@ -52,6 +52,8 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
+
       Get.snackbar(
         'Login Gagal',
         authProvider.errorMessage ?? 'Terjadi kesalahan saat login.',

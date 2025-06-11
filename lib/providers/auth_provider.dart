@@ -1,8 +1,9 @@
 // lib/providers/auth_provider.dart
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as SupabaseSdk;
+// import 'dart:io'; // Tidak perlu import File di sini jika tidak ada penggunaan langsung File
 import '../service/auth_service.dart';
-import '../model/user.dart' as AppUser; // Aliaskan model User Anda
+import '../model/user.dart' as AppUser;
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -71,7 +72,6 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // Metode untuk Register
-  // KINI MENERIMA EMAIL, PASSWORD, USERNAME, DAN PHONE
   Future<bool> signUp(
     String email,
     String password,
@@ -82,7 +82,6 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
     try {
-      // Teruskan username dan phone ke AuthService.signUp
       final SupabaseSdk.User? supabaseUser = await _authService.signUp(
         email,
         password,
@@ -90,8 +89,6 @@ class AuthProvider extends ChangeNotifier {
         phone,
       );
       if (supabaseUser != null) {
-        // Setelah registrasi berhasil, Supabase secara otomatis masuk.
-        // Anda mungkin ingin segera memuat profil pengguna di sini.
         _currentUser = await _authService.getCurrentUserWithProfile();
         return true;
       }
@@ -118,9 +115,7 @@ class AuthProvider extends ChangeNotifier {
         password,
       );
       if (supabaseUser != null) {
-        _currentUser =
-            await _authService
-                .getCurrentUserWithProfile(); // Pastikan profil dimuat setelah login
+        _currentUser = await _authService.getCurrentUserWithProfile();
         return true;
       }
       _errorMessage = "Email atau password salah.";
@@ -149,6 +144,109 @@ class AuthProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  // Metode untuk memperbarui profil pengguna (username, phone_number, avatar_url)
+  Future<bool> updateUserProfile({
+    String? username,
+    String? phoneNumber,
+    String? avatarUrl,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      if (_currentUser == null || _currentUser!.id == null) {
+        throw Exception(
+          "Pengguna tidak terautentikasi atau ID pengguna tidak ada.",
+        );
+      }
+      await _authService.updateUserProfile(
+        userId: _currentUser!.id!,
+        username: username,
+        phoneNumber: phoneNumber,
+        avatarUrl: avatarUrl,
+      );
+      _currentUser = await _authService.getCurrentUserWithProfile();
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Metode untuk memperbarui email pengguna
+  Future<bool> updateEmail(String newEmail) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      if (_currentUser == null) {
+        throw Exception("Pengguna tidak terautentikasi.");
+      }
+      await _authService.updateUserAuth(newEmail: newEmail);
+      _currentUser = await _authService.getCurrentUserWithProfile();
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Metode untuk memperbarui kata sandi pengguna
+  Future<bool> updatePassword(String newPassword) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      if (_currentUser == null) {
+        throw Exception("Pengguna tidak terautentikasi.");
+      }
+      await _authService.updateUserAuth(newPassword: newPassword);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Metode untuk Mengelola Avatar di Provider
+  Future<bool> uploadAvatar(dynamic imageContent, String userId) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      final String publicUrl = await _authService.uploadAvatar(
+        userId,
+        imageContent, // Meneruskan dynamic content (File atau Uint8List)
+      );
+      await updateUserProfile(avatarUrl: publicUrl);
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return false;
+    } finally {
+      if (_isLoading) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 }

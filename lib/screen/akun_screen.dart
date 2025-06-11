@@ -1,225 +1,234 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:mobile_uas/providers/auth_provider.dart'; // Pastikan path ini benar
-import 'package:mobile_uas/model/user.dart' as AppUser; // Alias model User Anda
+import 'package:get/get.dart';
+import 'package:mobile_uas/providers/auth_provider.dart';
+import 'package:mobile_uas/model/user.dart' as AppUser;
+import 'package:mobile_uas/screen/edit_profile_screen.dart'; // Import halaman edit profil
+import 'package:mobile_uas/screen/change_password_screen.dart'; // Import halaman ubah password
+import 'package:mobile_uas/screen/login_screen.dart'; // Import login screen
 
-class AkunScreen extends StatefulWidget {
+class AkunScreen extends StatelessWidget {
   const AkunScreen({super.key});
 
   @override
-  State<AkunScreen> createState() => _AkunScreenState();
-}
-
-class _AkunScreenState extends State<AkunScreen> {
-  @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final AppUser.User? currentUser = authProvider.currentUser;
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profil Saya'),
-        backgroundColor: Colors.blueAccent,
-        foregroundColor: Colors.white,
-        centerTitle: true,
-      ),
-      body:
-          currentUser == null
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    // Bagian Foto Profil
-                    GestureDetector(
-                      onTap: () {
-                        // TODO: Implementasikan logika untuk mengubah foto profil
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Fitur ubah foto profil belum diimplementasikan.',
-                            ),
-                          ),
-                        );
-                      },
-                      child: CircleAvatar(
-                        radius: 60,
-                        backgroundColor: Colors.grey.shade300,
-                        backgroundImage: const AssetImage(
-                          'assets/images/default_profile.png',
-                        ), // Gambar default
-                        // Anda bisa mengganti dengan NetworkImage jika currentUser memiliki URL foto
-                        // backgroundImage: currentUser.photoUrl != null
-                        //     ? NetworkImage(currentUser.photoUrl!)
-                        //     : const AssetImage('assets/images/default_profile.png') as ImageProvider,
-                        child: Align(
-                          alignment: Alignment.bottomRight,
-                          child: CircleAvatar(
-                            radius: 18,
-                            backgroundColor: Colors.white,
-                            child: Icon(
-                              Icons.camera_alt,
-                              size: 20,
-                              color: Colors.blueAccent,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 5,
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildProfileInfoRow(
-                              icon: Icons.person,
-                              label: 'Username',
-                              value: currentUser.username ?? 'N/A',
-                            ),
-                            const Divider(height: 30),
-                            _buildProfileInfoRow(
-                              icon: Icons.email,
-                              label: 'Email',
-                              value: currentUser.email,
-                            ),
-                            const Divider(height: 30),
-                            _buildProfileInfoRow(
-                              icon: Icons.phone,
-                              label: 'Nomor Telepon',
-                              value: currentUser.phoneNumber ?? 'N/A',
-                            ),
-                            const Divider(height: 30),
-                            // Placeholder Kata Sandi (catatan keamanan: jangan tampilkan kata sandi asli)
-                            _buildProfileInfoRow(
-                              icon: Icons.lock,
-                              label: 'Kata Sandi',
-                              value: '********', // Disamarkan untuk keamanan
-                              onTap: () {
-                                // TODO: Implementasikan fungsionalitas ubah kata sandi
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Fitur ubah kata sandi belum diimplementasikan.',
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          // TODO: Implementasikan fungsionalitas edit profil
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Fitur edit profil belum diimplementasikan.',
-                              ),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 5,
-                        ),
-                        icon: const Icon(Icons.edit),
-                        label: const Text(
-                          'Edit Profil',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          await authProvider.signOut();
-                          // Navigasi ke layar login atau splash screen setelah logout
-                          // Pastikan main.dart Anda menangani navigasi setelah signOut
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 5,
-                        ),
-                        icon: const Icon(Icons.logout),
-                        label: const Text(
-                          'Logout',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+      body: Consumer<AuthProvider>(
+        builder: (context, authProvider, child) {
+          final AppUser.User? currentUser = authProvider.currentUser;
+
+          if (currentUser == null) {
+            return const Center(
+              child: Text('Anda belum login.', style: TextStyle(fontSize: 18)),
+            );
+          }
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
+                Center(
+                  child: CircleAvatar(
+                    radius: 60,
+                    backgroundColor: Colors.blue.shade100,
+                    backgroundImage:
+                        currentUser.avatarUrl != null &&
+                                currentUser.avatarUrl!.isNotEmpty
+                            ? NetworkImage(currentUser.avatarUrl!)
+                                as ImageProvider
+                            : null,
+                    child:
+                        currentUser.avatarUrl == null ||
+                                currentUser.avatarUrl!.isEmpty
+                            ? const Icon(
+                              Icons.person,
+                              size: 80,
+                              color: Colors.blue,
+                            )
+                            : null,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 20),
+                Center(
+                  child: Text(
+                    currentUser.username ?? 'Pengguna',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+                Center(
+                  child: Text(
+                    currentUser.email,
+                    style: TextStyle(fontSize: 18, color: Colors.grey.shade700),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                _buildInfoCard(
+                  icon: Icons.phone,
+                  title: 'Nomor Telepon',
+                  value: currentUser.phoneNumber ?? 'Belum disetel',
+                ),
+                const SizedBox(height: 15),
+                _buildSettingItem(
+                  context,
+                  icon: Icons.edit,
+                  title: 'Edit Profil',
+                  onTap: () {
+                    Get.to(() => const EditProfileScreen());
+                  },
+                ),
+                _buildSettingItem(
+                  context,
+                  icon: Icons.lock,
+                  title: 'Ubah Kata Sandi',
+                  onTap: () {
+                    Get.to(
+                      () => const ChangePasswordScreen(),
+                    ); // Navigasi ke halaman ubah password
+                  },
+                ),
+                _buildSettingItem(
+                  context,
+                  icon: Icons.info_outline,
+                  title: 'Tentang Aplikasi',
+                  onTap: () {
+                    showAboutDialog(
+                      context: context,
+                      applicationName: 'Toko Kelontong Makmur',
+                      applicationVersion: '1.0.0',
+                      applicationLegalese: '© 2024 Toko Kelontong Makmur',
+                      children: [
+                        const Text(
+                          'Aplikasi ini membantu mengelola produk dan transaksi toko kelontong Anda.',
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 30),
+                Center(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      if (!context.mounted) return;
+
+                      await Provider.of<AuthProvider>(
+                        context,
+                        listen: false,
+                      ).signOut();
+                      if (!context.mounted) return;
+
+                      Get.offAll(() => const LoginScreen());
+                      Get.snackbar(
+                        'Logout',
+                        'Anda berhasil logout',
+                        backgroundColor: Colors.green.shade300,
+                        snackPosition: SnackPosition.BOTTOM,
+                      );
+                    },
+                    icon: const Icon(Icons.logout, color: Colors.white),
+                    label: const Text(
+                      'Logout',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 40,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildProfileInfoRow({
+  // Widget pembantu untuk menampilkan informasi profil
+  Widget _buildInfoCard({
     required IconData icon,
-    required String label,
+    required String title,
     required String value,
-    VoidCallback? onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        padding: const EdgeInsets.all(16.0),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: Colors.blueAccent, size: 28),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade700,
-                    ),
+            Icon(icon, color: Colors.blueAccent, size: 30),
+            const SizedBox(width: 15),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade600,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    value,
-                    style: const TextStyle(fontSize: 18, color: Colors.black87),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            if (onTap != null)
-              Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 20),
           ],
+        ),
+      ),
+    );
+  }
+
+  // Widget pembantu untuk item pengaturan yang bisa diklik
+  Widget _buildSettingItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Icon(icon, color: Colors.teal, size: 28),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 20),
+            ],
+          ),
         ),
       ),
     );
