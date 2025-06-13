@@ -1,15 +1,9 @@
 // lib/screen/dashboard_home.dart
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:mobile_uas/service/stock_movment_service.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart'; // Untuk format mata uang
-
-import 'package:mobile_uas/screen/laporan_screen.dart';
-import 'package:mobile_uas/screen/audit_screen.dart';
-import 'package:mobile_uas/screen/stock_out_screen.dart';
-import 'package:mobile_uas/screen/stock_in_screen.dart';
-import 'package:mobile_uas/service/transaksi_service.dart';
+import 'package:mobile_uas/providers/auth_provider.dart'; // Import AuthProvider
+import 'package:mobile_uas/providers/produk_provider.dart'; // Import ProdukProvider
+import 'package:mobile_uas/model/user.dart' as AppUser; // Alias model User Anda
 
 class DashboardHome extends StatefulWidget {
   const DashboardHome({super.key});
@@ -63,233 +57,165 @@ class _DashboardHomeState extends State<DashboardHome> {
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: _fetchDashboardData,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Bagian "Digitalisasi Bisnis Anda Sekarang"
-            Padding(
+    final authProvider = Provider.of<AuthProvider>(context);
+    final produkProvider = Provider.of<ProdukProvider>(context);
+    final AppUser.User? currentUser =
+        authProvider.currentUser; // Mendapatkan pengguna saat ini
+
+    // Filter produk yang stoknya menipis
+    final lowStockProduk =
+        produkProvider.produkList
+            .where(
+              (produk) => produk.stok <= produk.stokMinimum,
+            ) // Memfilter produk yang stoknya menipis
+            .toList();
+
+    // Data placeholder untuk stok masuk dan keluar
+    // Anda akan menggantinya dengan data aktual yang diambil dari layanan Anda
+    final int totalIncomingStock = 1200; // Contoh
+    final int totalOutgoingStock = 850; // Contoh
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Selamat Datang, ${currentUser?.username ?? currentUser?.email ?? 'Pengguna'}!', // Menampilkan username atau email pengguna
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 20),
+          // Ringkasan Profil Pengguna
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Container(
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  color: Colors.teal.shade50,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.teal.shade200),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Digitalisasikan Bisnis Anda Sekarang',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.teal,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Jalankan bisnis Anda dengan lebih mudah menggunakan fitur premium.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade700,
-                      ),
-                    ),
-                  ],
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Ringkasan Profil',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Email: ${currentUser?.email ?? '-'}',
+                  ), // Menampilkan email pengguna
+                  Text(
+                    'Username: ${currentUser?.username ?? '-'}',
+                  ), // Menampilkan username pengguna
+                  Text(
+                    'Nomor Telepon: ${currentUser?.phoneNumber ?? '-'}',
+                  ), // Menampilkan nomor telepon pengguna
+                ],
               ),
             ),
+          ),
+          const SizedBox(height: 20),
 
-            // Bagian "Data hari ini"
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          // Ringkasan Stok
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Ringkasan Stok',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Column(
                         children: [
-                          const Text(
-                            'Data hari ini',
-                            style: TextStyle(
-                              fontSize: 18,
+                          const Text('Total Produk'),
+                          Text(
+                            produkProvider.produkList.length
+                                .toString(), // Menampilkan total produk
+                            style: const TextStyle(
+                              fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
                             ),
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              _showData
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
-                              color: Colors.grey.shade600,
-                            ),
-                            onPressed: _toggleDataVisibility,
                           ),
                         ],
                       ),
-                      const Divider(height: 20, thickness: 1),
-                      _isLoadingData
-                          ? const Center(child: CircularProgressIndicator())
-                          : GridView.count(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            crossAxisCount: 2,
-                            childAspectRatio: 2.5,
-                            mainAxisSpacing: 10,
-                            crossAxisSpacing: 10,
-                            children: [
-                              _buildDataGridItem(
-                                'Stok Masuk',
-                                _showData ? _stockInToday.toString() : '******',
-                                Colors.green.shade700,
-                              ),
-                              _buildDataGridItem(
-                                'Stok Keluar',
-                                _showData
-                                    ? _stockOutToday.toString()
-                                    : '******',
-                                Colors.red.shade700,
-                              ),
-                              _buildDataGridItem(
-                                'Omset',
-                                _showData
-                                    ? 'Rp${NumberFormat.currency(locale: 'id', symbol: '', decimalDigits: 0).format(_omsetToday)}'
-                                    : 'Rp******',
-                                Colors.blueAccent.shade700,
-                              ),
-                              _buildDataGridItem(
-                                'Untung',
-                                _showData
-                                    ? 'Rp${NumberFormat.currency(locale: 'id', symbol: '', decimalDigits: 0).format(_keuntunganToday)}'
-                                    : 'Rp******',
-                                Colors.purple.shade700,
-                              ),
-                            ],
-                          ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Get.to(() => const LaporanScreen());
-                          },
-                          icon: const Icon(
-                            Icons.arrow_forward_ios,
-                            color: Colors.blueAccent,
-                          ),
-                          label: const Text(
-                            'Lihat Laporan',
-                            style: TextStyle(
-                              fontSize: 16,
+                      Column(
+                        children: [
+                          const Text('Stok Masuk Hari Ini'),
+                          Text(
+                            totalIncomingStock
+                                .toString(), // Placeholder untuk stok masuk
+                            style: const TextStyle(
+                              fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: Colors.blueAccent,
+                              color: Colors.green,
                             ),
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent.shade100,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              side: BorderSide(
-                                color: Colors.blueAccent.shade100,
-                              ),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          const Text('Stok Keluar Hari Ini'),
+                          Text(
+                            totalOutgoingStock
+                                .toString(), // Placeholder untuk stok keluar
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
                             ),
-                            elevation: 0,
                           ),
-                        ),
+                        ],
                       ),
                     ],
                   ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Bagian "Tips"
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.lightbulb_outline,
-                    color: Colors.amber.shade700,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Tips: Tambahkan setidaknya 5 barang',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontStyle: FontStyle.italic,
-                      color: Colors.grey.shade800,
+                  const SizedBox(height: 10),
+                  if (lowStockProduk.isNotEmpty) ...[
+                    const Divider(),
+                    const Text(
+                      'Produk dengan Stok Menipis:',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.orange,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 5),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: lowStockProduk.length,
+                      itemBuilder: (context, index) {
+                        final produk = lowStockProduk[index];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2.0),
+                          child: Text(
+                            '• ${produk.nama} (${produk.kodeProduk}): ${produk.stok} ${produk.satuan}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.red,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-
-            // --- Bagian Menu Baru: Audit, Stok Masuk, Stok Keluar ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 3,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                children: [
-                  // Audit
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.assignment_turned_in_outlined,
-                    title: 'Audit',
-                    onTap: () {
-                      Get.to(() => const AuditScreen());
-                    },
-                  ),
-                  // Stok Masuk
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.file_download,
-                    title: 'Stok Masuk',
-                    onTap: () {
-                      Get.to(() => const StockInScreen());
-                    },
-                  ),
-                  // Stok Keluar
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.file_upload,
-                    title: 'Stok Keluar',
-                    onTap: () {
-                      Get.to(() => const StockOutScreen());
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 100),
-          ],
-        ),
+          ),
+          const SizedBox(height: 20),
+          // Tambahkan widget lain di sini sesuai kebutuhan dashboard Anda
+        ],
       ),
     );
   }
@@ -312,38 +238,6 @@ class _DashboardHomeState extends State<DashboardHome> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildMenuItem(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 40, color: Colors.orange.shade700),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

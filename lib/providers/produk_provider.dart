@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import '../model/produk.dart';
 import '../service/produk_service.dart';
-// import 'package:supabase_flutter/supabase_flutter.dart'; // Tidak diperlukan di sini
 
 class ProdukProvider extends ChangeNotifier {
   final ProdukService _produkService = ProdukService();
@@ -61,6 +60,7 @@ class ProdukProvider extends ChangeNotifier {
           stok: stokBaru,
           stokMinimum: produkLama.stokMinimum,
           satuan: produkLama.satuan,
+          isActive: produkLama.isActive, // <--- Pastikan ini juga diperbarui
         );
         notifyListeners();
       }
@@ -84,13 +84,20 @@ class ProdukProvider extends ChangeNotifier {
     }
   }
 
+  // Ganti implementasi hapusProduk menjadi "deactivate"
   Future<void> hapusProduk(String id) async {
     try {
-      await _produkService.hapusProduk(id);
-      _produkList.removeWhere((produk) => produk.id == id);
+      await _produkService.deactivateProduk(
+        id,
+      ); // <--- Panggil metode deactivateProduk
+      // Tidak perlu menghapus dari list lokal, cukup refresh
+      // _produkList.removeWhere((produk) => produk.id == id);
+      await fetchProduk(); // Refresh list untuk menyembunyikan produk yang dinonaktifkan
       notifyListeners();
     } catch (e) {
-      print('Error di ProdukProvider.hapusProduk: $e');
+      print(
+        'Error di ProdukProvider.hapusProduk: $e',
+      ); // Log error dengan nama metode yang relevan
       throw e;
     }
   }
