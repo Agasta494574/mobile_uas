@@ -4,6 +4,7 @@ import 'package:mobile_uas/providers/stock_movment_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 import 'package:uuid/uuid.dart'; // Untuk generate UUID jika diperlukan (tapi Supabase sudah gen_random_uuid())
+
 import 'package:mobile_uas/model/produk.dart';
 import 'package:mobile_uas/providers/produk_provider.dart';
 import 'package:mobile_uas/providers/auth_provider.dart'; // Untuk mendapatkan userId

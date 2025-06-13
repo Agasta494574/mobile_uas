@@ -10,10 +10,11 @@ class Produk {
   final int stok;
   final int stokMinimum;
   final String satuan;
-  final bool isActive; // <--- Tambahkan ini
+  // Jika Anda ingin mengelola status aktif/nonaktif produk, aktifkan baris ini dan di Supabase:
+  final bool isActive; // <--- Tambahkan ini dan kolom di DB
 
   Produk({
-    required this.id, // ID ini akan digunakan untuk operasi UPDATE/DELETE
+    required this.id,
     required this.kodeProduk,
     required this.nama,
     required this.deskripsi,
@@ -23,13 +24,15 @@ class Produk {
     required this.stok,
     required this.stokMinimum,
     required this.satuan,
+    // Jika Anda ingin mengelola status aktif/nonaktif produk, aktifkan baris ini:
     this.isActive = true, // <--- Beri nilai default
   });
 
   factory Produk.fromMap(Map<String, dynamic> map) {
     return Produk(
       id: map['id'],
-      kodeProduk: map['kode_produk'],
+      kodeProduk:
+          map['kode_produk'], // <--- Perbaikan di sini, ganti 'kodeProduuk' menjadi 'kodeProduk'
       nama: map['nama'],
       deskripsi: map['deskripsi'],
       kategori: map['kategori'],
@@ -38,14 +41,11 @@ class Produk {
       stok: map['stok'],
       stokMinimum: map['stok_minimum'],
       satuan: map['satuan'],
-      isActive:
-          map['is_active'] ??
-          true, // <--- Ambil nilai dari map, default true jika null
+      isActive: map['is_active'] ?? true,
     );
   }
 
   Map<String, dynamic> toMap() {
-    // Digunakan untuk update (menyertakan ID)
     return {
       'id': id,
       'kode_produk': kodeProduk,
@@ -57,12 +57,12 @@ class Produk {
       'stok': stok,
       'stok_minimum': stokMinimum,
       'satuan': satuan,
+      // Jika Anda ingin mengelola status aktif/nonaktif produk, aktifkan baris ini:
       'is_active': isActive, // <--- Tambahkan ini
     };
   }
 
   Map<String, dynamic> toMapWithoutId() {
-    // Digunakan untuk insert (tidak menyertakan ID)
     return {
       'kode_produk': kodeProduk,
       'nama': nama,
@@ -73,6 +73,7 @@ class Produk {
       'stok': stok,
       'stok_minimum': stokMinimum,
       'satuan': satuan,
+      // Jika Anda ingin mengelola status aktif/nonaktif produk, aktifkan baris ini:
       'is_active': isActive, // <--- Tambahkan ini
     };
   }

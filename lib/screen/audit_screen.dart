@@ -4,7 +4,7 @@ import 'package:mobile_uas/model/stock_movment_model.dart';
 import 'package:mobile_uas/providers/stock_movment_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:mobile_uas/providers/transaksi_provider.dart'; // Untuk menampilkan log transaksi juga
+import 'package:mobile_uas/providers/transaksi_provider.dart'; 
 import 'package:mobile_uas/model/transaksi.dart';
 
 class AuditScreen extends StatefulWidget {
@@ -19,6 +19,7 @@ class _AuditScreenState extends State<AuditScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Pastikan kedua provider di-fetch
       Provider.of<StockMovementProvider>(
         context,
         listen: false,
@@ -60,11 +61,15 @@ class _AuditScreenState extends State<AuditScreen> {
           // Gabungkan data pergerakan stok dan transaksi untuk tampilan audit
           final List<dynamic> auditItems = [];
 
-          // Perbaikan di sini: Hilangkan operator '?'
-          auditItems.addAll(stockMovementProvider.stockMovements);
+          // Tambahkan pergerakan stok
+          auditItems.addAll(
+            stockMovementProvider.stockMovements,
+          ); // Perbaikan null safety
 
-          // Perbaikan di sini: Hilangkan operator '?'
-          auditItems.addAll(transaksiProvider.transactions);
+          // Tambahkan transaksi (header saja untuk ringkasan di audit)
+          auditItems.addAll(
+            transaksiProvider.transactions,
+          ); // Perbaikan null safety
 
           // Urutkan berdasarkan tanggal terbaru
           auditItems.sort((a, b) {

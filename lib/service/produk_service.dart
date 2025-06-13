@@ -10,7 +10,6 @@ class ProdukService {
       final List<Map<String, dynamic>> response = await supabase
           .from('produk')
           .select()
-          .eq('is_active', true) // <--- Hanya ambil produk yang aktif
           .order('nama', ascending: true);
 
       return response.map((item) => Produk.fromMap(item)).toList();
@@ -22,8 +21,9 @@ class ProdukService {
 
   Future<void> tambahProduk(Produk produk) async {
     try {
-      // Pastikan 'is_active' disertakan saat menambah produk baru
-      await supabase.from('produk').insert(produk.toMapWithoutId());
+      await supabase
+          .from('produk')
+          .insert(produk.toMapWithoutId()); // Memanggil toMapWithoutId()
     } catch (e) {
       print('Error adding produk: $e');
       throw Exception('Gagal menambahkan produk: $e');
@@ -48,23 +48,12 @@ class ProdukService {
     }
   }
 
-  // Metode baru untuk menonaktifkan produk (soft delete)
-  Future<void> deactivateProduk(String id) async {
+  Future<void> hapusProduk(String id) async {
     try {
-      await supabase.from('produk').update({'is_active': false}).eq('id', id);
+      await supabase.from('produk').delete().eq('id', id);
     } catch (e) {
-      print('Error deactivating produk: $e');
-      throw Exception('Gagal menonaktifkan produk: $e');
+      print('Error deleting produk: $e');
+      throw Exception('Gagal menghapus produk: $e');
     }
   }
-
-  // Metode hapusProduk(String id) yang lama dapat dihapus atau tidak digunakan lagi
-  // Future<void> hapusProduk(String id) async {
-  //   try {
-  //     await supabase.from('produk').delete().eq('id', id);
-  //   } catch (e) {
-  //     print('Error deleting produk: $e');
-  //     throw Exception('Gagal menghapus produk: $e');
-  //   }
-  // }
 }

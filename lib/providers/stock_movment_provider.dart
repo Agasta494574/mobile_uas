@@ -87,6 +87,11 @@ class StockMovementProvider extends ChangeNotifier {
         _setErrorMessage('Jumlah keluar melebihi stok yang tersedia.');
         return false;
       }
+      if (quantity <= 0) {
+        // Menambahkan validasi jika jumlah 0 atau negatif
+        _setErrorMessage('Jumlah keluar harus lebih dari 0.');
+        return false;
+      }
 
       final newMovement = StockMovement(
         id: '', // ID akan di-generate oleh Supabase

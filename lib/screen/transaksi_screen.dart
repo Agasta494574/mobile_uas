@@ -162,8 +162,12 @@ class _TransaksiScreenState extends State<TransaksiScreen> {
             jumlah: item.jumlah,
             subtotal: item.produk.hargaJual * item.jumlah,
             productName: item.produk.nama, // Diisi untuk kenyamanan lokal
-            productPricePerUnit: item.produk.hargaJual,
-            createdAt: now, // Diisi untuk kenyamanan lokal
+            productPricePerUnit:
+                item.produk.hargaJual, // Diisi untuk kenyamanan lokal
+            productBuyingPrice:
+                item.produk.hargaBeli, // Diisi untuk kenyamanan lokal
+            createdAt:
+                now, // <--- PENTING: Menggunakan waktu transaksi utama untuk detail juga
           ),
         );
       }

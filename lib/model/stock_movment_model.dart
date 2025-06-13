@@ -1,4 +1,4 @@
-// lib/model/stock_movement.dart
+// lib/model/stock_movement_model.dart
 import 'package:flutter/material.dart'; // Hanya untuk Icons jika diperlukan, tapi tidak langsung digunakan di sini
 import 'package:intl/intl.dart'; // Untuk parsing tanggal jika string
 
