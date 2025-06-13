@@ -25,27 +25,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 2; // Home di tengah (index ke-2)
 
   final iconList = <IconData>[
-    Icons.inventory_2, // Produk
-    Icons.receipt_long, // Transaksi
-    Icons.bar_chart, // Laporan
-    Icons.person, // Akun
-  ];
-
-  final List<String> appBarTitles = [
-    'Produk',
-    'Transaksi',
-    'Moodev', // Ini akan diganti secara dinamis
-    'Laporan',
-    'Akun',
+    Icons.inventory_2, // Produk (index 0)
+    Icons.receipt_long, // Transaksi (index 1)
+    Icons.bar_chart, // Laporan (index 2)
+    Icons.person, // Akun (index 3)
   ];
 
   final List<Widget> pages = [
     const ProdukScreen(), // 0
     const TransaksiScreen(), // 1
-    const DashboardHome(), // 2
+    const DashboardHome(), // 2 (Home screen)
     const LaporanScreen(), // 3
     const AkunScreen(), // 4
   ];
+
+  // Penyesuaian judul AppBar berdasarkan index
+  String _getAppBarTitle(int index, AppUser.User? currentUser) {
+    if (index == 2) {
+      // Jika halaman Beranda
+      return currentUser?.username ?? 'Toko Babe';
+    } else if (index == 0) {
+      return 'Produk';
+    } else if (index == 1) {
+      return 'Transaksi';
+    } else if (index == 3) {
+      return 'Laporan';
+    } else if (index == 4) {
+      return 'Akun';
+    }
+    return 'Dashboard'; // Default
+  }
 
   void _logout() async {
     try {
@@ -73,28 +82,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Menggunakan Consumer untuk mendapatkan AuthProvider dan mengakses username
     final authProvider = Provider.of<AuthProvider>(context);
     final AppUser.User? currentUser = authProvider.currentUser;
-    final String currentTitle;
-
-    if (_currentIndex == 2) {
-      // Jika halaman Beranda
-      currentTitle =
-          currentUser?.username ??
-          'Toko Babe'; // Ganti 'Moodev' dengan username atau default 'Toko Babe'
-    } else {
-      currentTitle = appBarTitles[_currentIndex];
-    }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(currentTitle), // Menggunakan currentTitle yang dinamis
+        title: Text(
+          _getAppBarTitle(_currentIndex, currentUser),
+        ), // Judul dinamis
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
         elevation: 0,
         actions:
-            _currentIndex == 4
+            _currentIndex ==
+                    4 // Tombol logout hanya di halaman Akun
                 ? [
                   IconButton(
                     icon: const Icon(Icons.logout),
@@ -102,7 +103,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     tooltip: 'Logout',
                   ),
                 ]
-                : (_currentIndex == 2
+                : (_currentIndex ==
+                        2 // Tombol notifikasi hanya di halaman Beranda
                     ? [
                       IconButton(
                         icon: const Icon(Icons.notifications_none),
@@ -119,13 +121,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ]
                     : null),
       ),
-      body: pages[_currentIndex],
+      body: IndexedStack(
+        // <--- Menggunakan IndexedStack untuk mempertahankan status
+        index: _currentIndex,
+        children: pages,
+      ),
       floatingActionButton: SizedBox(
         width: 56,
         height: 56,
         child: FloatingActionButton(
           shape: const CircleBorder(),
-          onPressed: () => setState(() => _currentIndex = 2), // Home
+          onPressed: () => setState(() => _currentIndex = 2), // Kembali ke Home
           backgroundColor: Colors.teal,
           elevation: 8,
           child: const Icon(Icons.home, size: 28, color: Colors.white),
@@ -134,7 +140,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: AnimatedBottomNavigationBar(
         icons: iconList,
-        activeIndex: _currentIndex < 2 ? _currentIndex : _currentIndex - 1,
+        // Logika activeIndex: jika _currentIndex adalah 2 (home), tidak ada ikon aktif di bottom bar.
+        // Jika _currentIndex < 2, gunakan index tersebut. Jika > 2, kurangi 1.
+        activeIndex:
+            _currentIndex == 2
+                ? -1
+                : (_currentIndex < 2 ? _currentIndex : _currentIndex - 1),
         gapLocation: GapLocation.center,
         notchSmoothness: NotchSmoothness.sharpEdge,
         leftCornerRadius: 0,
@@ -144,8 +155,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: Colors.teal,
         iconSize: 28,
         onTap: (index) {
+          // Sesuaikan _currentIndex berdasarkan indeks dari bottom nav bar
           int actualIndex = index < 2 ? index : index + 1;
-          setState(() => _currentIndex = actualIndex);
+          setState(() {
+            _currentIndex = actualIndex;
+          });
         },
       ),
     );
