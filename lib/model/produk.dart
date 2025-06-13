@@ -10,6 +10,7 @@ class Produk {
   final int stok;
   final int stokMinimum;
   final String satuan;
+  final bool isActive; // <--- Tambahkan ini
 
   Produk({
     required this.id, // ID ini akan digunakan untuk operasi UPDATE/DELETE
@@ -22,6 +23,7 @@ class Produk {
     required this.stok,
     required this.stokMinimum,
     required this.satuan,
+    this.isActive = true, // <--- Beri nilai default
   });
 
   factory Produk.fromMap(Map<String, dynamic> map) {
@@ -36,6 +38,9 @@ class Produk {
       stok: map['stok'],
       stokMinimum: map['stok_minimum'],
       satuan: map['satuan'],
+      isActive:
+          map['is_active'] ??
+          true, // <--- Ambil nilai dari map, default true jika null
     );
   }
 
@@ -52,6 +57,7 @@ class Produk {
       'stok': stok,
       'stok_minimum': stokMinimum,
       'satuan': satuan,
+      'is_active': isActive, // <--- Tambahkan ini
     };
   }
 
@@ -67,6 +73,7 @@ class Produk {
       'stok': stok,
       'stok_minimum': stokMinimum,
       'satuan': satuan,
+      'is_active': isActive, // <--- Tambahkan ini
     };
   }
 }
