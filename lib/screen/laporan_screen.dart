@@ -31,12 +31,12 @@ class _LaporanScreenState extends State<LaporanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Laporan Penjualan'),
-        backgroundColor: Colors.teal,
+        backgroundColor: Colors.white,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.pie_chart),
+            color: Colors.teal,
             onPressed: () {
               Get.to(() => const ProductSalesChartScreen());
             },

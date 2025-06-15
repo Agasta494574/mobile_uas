@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import '../model/produk.dart';
 import '../service/produk_service.dart';
-// import 'package:supabase_flutter/supabase_flutter.dart'; // Tidak diperlukan di sini
 
 class ProdukProvider extends ChangeNotifier {
   final ProdukService _produkService = ProdukService();
@@ -13,11 +12,16 @@ class ProdukProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  ProdukProvider() {
-    fetchProduk();
-  }
+  // --- PERBAIKAN ---
+  // Konstruktor dikosongkan. Jangan panggil fetchProduk() dari sini
+  // untuk menghindari error "setState() called during build".
+  ProdukProvider();
 
   Future<void> fetchProduk() async {
+    // Jika data sudah ada dan tidak sedang loading, jangan fetch ulang kecuali diminta.
+    // Ini bisa membantu mengurangi panggilan jaringan yang tidak perlu.
+    if (_produkList.isNotEmpty && !_isLoading) return;
+
     _isLoading = true;
     notifyListeners();
 
@@ -25,8 +29,7 @@ class ProdukProvider extends ChangeNotifier {
       _produkList = await _produkService.getSemuaProduk();
     } catch (e) {
       print('Error di ProdukProvider.fetchProduk: $e');
-      _produkList = []; // Bersihkan list jika ada error
-      // TODO: Tampilkan pesan error ke UI jika diperlukan
+      _produkList = [];
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -43,38 +46,11 @@ class ProdukProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateStok(String id, int stokBaru) async {
-    try {
-      await _produkService.updateStok(id, stokBaru);
-      // Perbarui list lokal
-      int index = _produkList.indexWhere((p) => p.id == id);
-      if (index >= 0) {
-        final produkLama = _produkList[index];
-        _produkList[index] = Produk(
-          id: produkLama.id,
-          kodeProduk: produkLama.kodeProduk,
-          nama: produkLama.nama,
-          deskripsi: produkLama.deskripsi,
-          kategori: produkLama.kategori,
-          hargaBeli: produkLama.hargaBeli,
-          hargaJual: produkLama.hargaJual,
-          stok: stokBaru,
-          stokMinimum: produkLama.stokMinimum,
-          satuan: produkLama.satuan,
-        );
-        notifyListeners();
-      }
-    } catch (e) {
-      print('Error di ProdukProvider.updateStok: $e');
-      throw e;
-    }
-  }
-
   Future<void> updateProduk(Produk produk) async {
     try {
       await _produkService.updateProduk(produk);
       int index = _produkList.indexWhere((p) => p.id == produk.id);
-      if (index >= 0) {
+      if (index != -1) {
         _produkList[index] = produk;
         notifyListeners();
       }
@@ -86,12 +62,27 @@ class ProdukProvider extends ChangeNotifier {
 
   Future<void> hapusProduk(String id) async {
     try {
-      await _produkService.hapusProduk(id);
-      _produkList.removeWhere((produk) => produk.id == id);
-      notifyListeners();
+      await _produkService.deactivateProduk(id);
+      await fetchProduk();
     } catch (e) {
       print('Error di ProdukProvider.hapusProduk: $e');
       throw e;
+    }
+  }
+
+  // Fungsi untuk refresh manual jika diperlukan (misal: dari pull-to-refresh)
+  Future<void> forceFetchProduk() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      _produkList = await _produkService.getSemuaProduk();
+    } catch (e) {
+      print('Error di ProdukProvider.forceFetchProduk: $e');
+      _produkList = [];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 }

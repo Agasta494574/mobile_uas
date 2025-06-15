@@ -53,8 +53,8 @@ class StockMovement {
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      'id': id,
+    // Buat map dasar dengan semua kolom kecuali 'id'
+    final Map<String, dynamic> map = {
       'product_id': productId,
       'user_id': userId,
       'type': type,
@@ -62,5 +62,12 @@ class StockMovement {
       'reason': reason,
       'created_at': createdAt.toIso8601String(),
     };
+    // Hanya tambahkan 'id' ke map jika properti 'id' di objek StockMovement tidak kosong.
+    // Jika id kosong, kolom 'id' tidak akan disertakan dalam request,
+    // memungkinkan Supabase menggunakan default value gen_random_uuid().
+    if (id.isNotEmpty) {
+      map['id'] = id;
+    }
+    return map;
   }
 }

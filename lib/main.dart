@@ -15,8 +15,7 @@ Future<void> main() async {
   await initializeDateFormatting('id', null);
 
   await Supabase.initialize(
-    url:
-        'https://zmmkvlwjurkercezmvfb.supabase.co', // Ganti dengan URL Supabase Anda
+    url: 'https://zmmkvlwjurkercezmvfb.supabase.co',
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptbWt2bHdqdXJrZXJjZXptdmZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2ODg5OTUsImV4cCI6MjA2NDI2NDk5NX0.cUQwYK8bpgACxZboVF1ObD4JhItCJJqRR-EXTJUZb_k', // Ganti dengan anon key Supabase Anda
   );

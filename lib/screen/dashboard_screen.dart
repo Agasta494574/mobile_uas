@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
+import 'package:mobile_uas/providers/stock_movment_provider.dart';
+import 'package:mobile_uas/providers/transaksi_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'package:mobile_uas/screen/login_screen.dart';
@@ -11,8 +13,8 @@ import 'package:mobile_uas/screen/transaksi_screen.dart';
 import 'package:mobile_uas/screen/laporan_screen.dart';
 import 'package:mobile_uas/screen/akun_screen.dart';
 import 'package:mobile_uas/providers/auth_provider.dart';
-import 'package:mobile_uas/model/user.dart'
-    as AppUser; // Import alias untuk User model
+import 'package:mobile_uas/providers/produk_provider.dart';
+import 'package:mobile_uas/model/user.dart' as AppUser;
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -22,30 +24,56 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _currentIndex = 2; // Home di tengah (index ke-2)
+  int _currentIndex = 2;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchInitialData();
+    });
+  }
+
+  void _fetchInitialData() {
+    Provider.of<ProdukProvider>(context, listen: false).fetchProduk();
+    Provider.of<TransaksiProvider>(context, listen: false).fetchTransactions();
+    Provider.of<StockMovementProvider>(
+      context,
+      listen: false,
+    ).fetchStockMovements();
+  }
 
   final iconList = <IconData>[
-    Icons.inventory_2, // Produk
-    Icons.receipt_long, // Transaksi
-    Icons.bar_chart, // Laporan
-    Icons.person, // Akun
-  ];
-
-  final List<String> appBarTitles = [
-    'Produk',
-    'Transaksi',
-    'Moodev', // Ini akan diganti secara dinamis
-    'Laporan',
-    'Akun',
+    Icons.inventory_2,
+    Icons.receipt_long,
+    Icons.bar_chart,
+    Icons.person,
   ];
 
   final List<Widget> pages = [
-    const ProdukScreen(), // 0
-    const TransaksiScreen(), // 1
-    const DashboardHome(), // 2
-    const LaporanScreen(), // 3
-    const AkunScreen(), // 4
+    const ProdukScreen(),
+    const TransaksiScreen(),
+    const DashboardHome(),
+    const LaporanScreen(),
+    const AkunScreen(),
   ];
+
+  String _getAppBarTitle(int index, AppUser.User? currentUser) {
+    switch (index) {
+      case 0:
+        return 'Produk';
+      case 1:
+        return 'Transaksi';
+      case 2:
+        return currentUser?.username ?? 'Toko Babe';
+      case 3:
+        return 'Laporan';
+      case 4:
+        return 'Akun';
+      default:
+        return 'Dashboard';
+    }
+  }
 
   void _logout() async {
     try {
@@ -73,23 +101,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Menggunakan Consumer untuk mendapatkan AuthProvider dan mengakses username
     final authProvider = Provider.of<AuthProvider>(context);
     final AppUser.User? currentUser = authProvider.currentUser;
-    final String currentTitle;
-
-    if (_currentIndex == 2) {
-      // Jika halaman Beranda
-      currentTitle =
-          currentUser?.username ??
-          'Toko Babe'; // Ganti 'Moodev' dengan username atau default 'Toko Babe'
-    } else {
-      currentTitle = appBarTitles[_currentIndex];
-    }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(currentTitle), // Menggunakan currentTitle yang dinamis
+        title: Text(_getAppBarTitle(_currentIndex, currentUser)),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -119,13 +136,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ]
                     : null),
       ),
-      body: pages[_currentIndex],
+      body: IndexedStack(index: _currentIndex, children: pages),
       floatingActionButton: SizedBox(
         width: 56,
         height: 56,
         child: FloatingActionButton(
+          // --- PERBAIKAN DI SINI ---
+          heroTag: 'dashboardFab',
           shape: const CircleBorder(),
-          onPressed: () => setState(() => _currentIndex = 2), // Home
+          onPressed: () => setState(() => _currentIndex = 2),
           backgroundColor: Colors.teal,
           elevation: 8,
           child: const Icon(Icons.home, size: 28, color: Colors.white),
@@ -134,7 +153,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: AnimatedBottomNavigationBar(
         icons: iconList,
-        activeIndex: _currentIndex < 2 ? _currentIndex : _currentIndex - 1,
+        activeIndex:
+            _currentIndex == 2
+                ? -1
+                : (_currentIndex < 2 ? _currentIndex : _currentIndex - 1),
         gapLocation: GapLocation.center,
         notchSmoothness: NotchSmoothness.sharpEdge,
         leftCornerRadius: 0,
@@ -145,7 +167,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         iconSize: 28,
         onTap: (index) {
           int actualIndex = index < 2 ? index : index + 1;
-          setState(() => _currentIndex = actualIndex);
+          setState(() {
+            _currentIndex = actualIndex;
+          });
         },
       ),
     );

@@ -10,8 +10,7 @@ class Produk {
   final int stok;
   final int stokMinimum;
   final String satuan;
-  // Jika Anda ingin mengelola status aktif/nonaktif produk, aktifkan baris ini dan di Supabase:
-  final bool isActive; // <--- Tambahkan ini dan kolom di DB
+  final bool isActive; // <--- Tambahkan ini
 
   Produk({
     required this.id,
@@ -24,15 +23,13 @@ class Produk {
     required this.stok,
     required this.stokMinimum,
     required this.satuan,
-    // Jika Anda ingin mengelola status aktif/nonaktif produk, aktifkan baris ini:
     this.isActive = true, // <--- Beri nilai default
   });
 
   factory Produk.fromMap(Map<String, dynamic> map) {
     return Produk(
       id: map['id'],
-      kodeProduk:
-          map['kode_produk'], // <--- Perbaikan di sini, ganti 'kodeProduuk' menjadi 'kodeProduk'
+      kodeProduk: map['kode_produk'], // <--- Perbaiki typo di sini jika ada
       nama: map['nama'],
       deskripsi: map['deskripsi'],
       kategori: map['kategori'],
@@ -41,7 +38,9 @@ class Produk {
       stok: map['stok'],
       stokMinimum: map['stok_minimum'],
       satuan: map['satuan'],
-      isActive: map['is_active'] ?? true,
+      isActive:
+          map['is_active'] ??
+          true, // <--- Ambil nilai dari map, default true jika null
     );
   }
 
@@ -57,7 +56,6 @@ class Produk {
       'stok': stok,
       'stok_minimum': stokMinimum,
       'satuan': satuan,
-      // Jika Anda ingin mengelola status aktif/nonaktif produk, aktifkan baris ini:
       'is_active': isActive, // <--- Tambahkan ini
     };
   }
@@ -73,7 +71,6 @@ class Produk {
       'stok': stok,
       'stok_minimum': stokMinimum,
       'satuan': satuan,
-      // Jika Anda ingin mengelola status aktif/nonaktif produk, aktifkan baris ini:
       'is_active': isActive, // <--- Tambahkan ini
     };
   }
