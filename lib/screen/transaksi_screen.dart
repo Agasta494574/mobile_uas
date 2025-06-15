@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_uas/model/produk.dart';
-import 'package:mobile_uas/model/transaksi.dart'; // Import model Transaksi
-import 'package:mobile_uas/model/transaksi_detail.dart'; // Import model TransaksiDetail
+import 'package:mobile_uas/model/transaksi.dart';
+import 'package:mobile_uas/model/transaksi_detail.dart';
 import 'package:mobile_uas/providers/produk_provider.dart';
-import 'package:mobile_uas/providers/transaksi_provider.dart'; // Import TransaksiProvider
-import 'package:mobile_uas/providers/auth_provider.dart'; // <--- BARU: Import AuthProvider
+import 'package:mobile_uas/providers/transaksi_provider.dart';
+import 'package:mobile_uas/providers/auth_provider.dart';
 import 'package:uuid/uuid.dart';
 
 class CartItem {
@@ -64,7 +64,7 @@ class _TransaksiScreenState extends State<TransaksiScreen> {
     if (jumlah > _produkTerpilih!.stok) {
       Get.snackbar(
         'Maaf',
-        'Stok tidak cukup.  ${_produkTerpilih!.stok}',
+        'Stok tidak cukup. Stok tersedia: ${_produkTerpilih!.stok}',
         backgroundColor: Colors.orange.shade200,
         snackPosition: SnackPosition.BOTTOM,
       );
@@ -80,7 +80,7 @@ class _TransaksiScreenState extends State<TransaksiScreen> {
         if (totalJumlah > _produkTerpilih!.stok) {
           Get.snackbar(
             'Error',
-            'Total jumlah melebihi stok yang tersedia.',
+            'Total jumlah di keranjang melebihi stok yang tersedia.',
             backgroundColor: Colors.orange.shade200,
             snackPosition: SnackPosition.BOTTOM,
           );
@@ -94,6 +94,7 @@ class _TransaksiScreenState extends State<TransaksiScreen> {
       _produkTerpilih = null;
       _jumlahController.clear();
       _cariController.clear();
+      FocusScope.of(context).unfocus(); // Tutup keyboard
     });
   }
 
@@ -118,13 +119,9 @@ class _TransaksiScreenState extends State<TransaksiScreen> {
     final transaksiProvider = Provider.of<TransaksiProvider>(
       context,
       listen: false,
-    ); // Dapatkan TransaksiProvider
-    final authProvider = Provider.of<AuthProvider>(
-      context,
-      listen: false,
-    ); // <--- BARU: Dapatkan AuthProvider
+    );
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    // <--- BARU: Pastikan user_id tersedia dari AuthProvider
     final currentUserId = authProvider.currentUser?.id;
     if (currentUserId == null) {
       Get.snackbar(
@@ -135,55 +132,42 @@ class _TransaksiScreenState extends State<TransaksiScreen> {
       );
       return;
     }
-    // <--- AKHIR BARU
 
     try {
-      // 1. Buat ID transaksi unik
       final String transactionId = _uuid.v4();
       final DateTime now = DateTime.now();
 
-      // 2. Buat objek Transaksi (Header)
       final newTransaksi = Transaksi(
         id: transactionId,
         tanggal: now,
         totalBayar: _totalBayar,
-        userId: currentUserId, // <--- GUNAKAN USER_ID DARI AUTH PROVIDER
+        userId: currentUserId,
       );
 
-      // 3. Buat list TransaksiDetail dari item di keranjang
-      final List<TransaksiDetail> transaksiDetails = [];
-      for (var item in _keranjang) {
-        final detailId = _uuid.v4(); // ID unik untuk setiap detail
-        transaksiDetails.add(
-          TransaksiDetail(
-            id: detailId,
-            transaksiId: transactionId,
-            produkId: item.produk.id,
-            jumlah: item.jumlah,
-            subtotal: item.produk.hargaJual * item.jumlah,
-            productName: item.produk.nama, // Diisi untuk kenyamanan lokal
-            productPricePerUnit:
-                item.produk.hargaJual, // Diisi untuk kenyamanan lokal
-            productBuyingPrice:
-                item.produk.hargaBeli, // Diisi untuk kenyamanan lokal
-            createdAt:
-                now, // <--- PENTING: Menggunakan waktu transaksi utama untuk detail juga
-          ),
-        );
-      }
+      final List<TransaksiDetail> transaksiDetails =
+          _keranjang.map((item) {
+            return TransaksiDetail(
+              id: _uuid.v4(),
+              transaksiId: transactionId,
+              produkId: item.produk.id,
+              jumlah: item.jumlah,
+              subtotal: item.produk.hargaJual * item.jumlah,
+              productName: item.produk.nama,
+              productPricePerUnit: item.produk.hargaJual,
+              productBuyingPrice: item.produk.hargaBeli,
+              createdAt: now,
+            );
+          }).toList();
 
-      // 4. Panggil TransaksiProvider untuk menyimpan transaksi dan detailnya
+      // 1. Panggil provider untuk menyimpan transaksi.
+      // Pengurangan stok akan ditangani secara otomatis oleh trigger di database Supabase.
       await transaksiProvider.addTransaction(newTransaksi, transaksiDetails);
 
-      // 5. Kurangi stok produk sesuai jumlah pembelian
-      for (var item in _keranjang) {
-        await produkProvider.updateStok(
-          item.produk.id,
-          item.produk.stok - item.jumlah,
-        );
-      }
+      // --- BLOK KODE PEMBARUAN STOK MANUAL DIHAPUS DARI SINI ---
+      // Logika ini sekarang dipindahkan ke backend (Supabase Trigger)
+      // agar lebih aman dan konsisten.
 
-      // <--- BARU: Muat ulang data produk di ProdukProvider setelah transaksi
+      // 2. Muat ulang data produk untuk me-refresh UI dengan data stok terbaru dari server.
       await produkProvider.fetchProduk();
 
       setState(() {
@@ -192,14 +176,14 @@ class _TransaksiScreenState extends State<TransaksiScreen> {
 
       Get.snackbar(
         'Berhasil',
-        'Transaksi berhasil disimpan dan stok diperbarui!',
+        'Transaksi berhasil disimpan!', // Pesan disesuaikan
         backgroundColor: Colors.green.shade200,
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e) {
       Get.snackbar(
         'Error',
-        'Gagal menyimpan transaksi atau memperbarui stok: ${e.toString()}',
+        'Gagal menyimpan transaksi: ${e.toString()}',
         backgroundColor: Colors.red.shade200,
         snackPosition: SnackPosition.BOTTOM,
       );
@@ -224,6 +208,7 @@ class _TransaksiScreenState extends State<TransaksiScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // (UI widgets lainnya tetap sama, tidak perlu diubah)
             const SizedBox(height: 16),
             TextField(
               controller: _cariController,
@@ -266,30 +251,34 @@ class _TransaksiScreenState extends State<TransaksiScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: _tambahKeKeranjang,
-              icon: const Icon(Icons.add_shopping_cart),
-              label: const Text('Tambah ke Keranjang'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _tambahKeKeranjang,
+                icon: const Icon(Icons.add_shopping_cart),
+                label: const Text('Tambah ke Keranjang'),
+              ),
             ),
             const SizedBox(height: 20),
             const Text(
               'Keranjang Belanja:',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
+            const Divider(),
             if (_keranjang.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 20),
-                child: Text('Keranjang kosong'),
+                child: Center(child: Text('Keranjang kosong')),
               ),
             ..._keranjang.map((item) {
               return ListTile(
-                title: Text('${item.produk.nama}'),
+                title: Text(item.produk.nama),
                 subtitle: Text('Jumlah: ${item.jumlah}'),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Subtotal: Rp${(item.produk.hargaJual * item.jumlah).toStringAsFixed(0)}',
+                      'Rp${(item.produk.hargaJual * item.jumlah).toStringAsFixed(0)}',
                     ),
                     IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
@@ -299,6 +288,7 @@ class _TransaksiScreenState extends State<TransaksiScreen> {
                 ),
               );
             }).toList(),
+            const Divider(),
             const SizedBox(height: 20),
             Text(
               'Total Bayar: Rp${_totalBayar.toStringAsFixed(0)}',
@@ -311,7 +301,10 @@ class _TransaksiScreenState extends State<TransaksiScreen> {
                 onPressed: _simpanTransaksi,
                 icon: const Icon(Icons.save),
                 label: const Text('Simpan Transaksi'),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
             ),
           ],

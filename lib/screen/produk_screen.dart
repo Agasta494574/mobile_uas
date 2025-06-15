@@ -1,10 +1,10 @@
-// lib/screen/produk_screen.dart (Final)
+// lib/screen/produk_screen.dart (Perbaikan Final Lengkap)
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import '../model/produk.dart';
 import '../providers/produk_provider.dart';
-import 'package:intl/intl.dart'; // Tambahkan ini untuk format harga
+import 'package:intl/intl.dart';
 
 class ProdukScreen extends StatefulWidget {
   const ProdukScreen({super.key});
@@ -15,9 +15,8 @@ class ProdukScreen extends StatefulWidget {
 
 class _ProdukScreenState extends State<ProdukScreen> {
   final TextEditingController _searchController = TextEditingController();
-  List<Produk> _filteredProdukList = [];
 
-  // Controller untuk form tambah/edit produk
+  // Controller untuk form, tetap sama
   final _kodeController = TextEditingController();
   final _namaController = TextEditingController();
   final _deskripsiController = TextEditingController();
@@ -29,45 +28,21 @@ class _ProdukScreenState extends State<ProdukScreen> {
 
   String? _selectedKategori;
   String _selectedSatuanPokok = 'Pcs';
-
-  // Untuk edit produk
   Produk? _produkToEdit;
 
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(_filterProduk);
-    // Saat inisialisasi, ambil data produk dan filter
-    Provider.of<ProdukProvider>(context, listen: false).fetchProduk().then((_) {
-      _filterProduk();
+    _searchController.addListener(() {
+      setState(() {});
     });
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Panggil filter setiap kali dependensi berubah (termasuk setelah fetchProduk)
-    _filterProduk();
-  }
-
-  void _filterProduk() {
-    final query = _searchController.text.toLowerCase();
-    final produkList =
-        Provider.of<ProdukProvider>(context, listen: false).produkList;
-
-    setState(() {
-      _filteredProdukList =
-          query.isEmpty
-              ? produkList
-              : produkList.where((produk) {
-                return produk.nama.toLowerCase().contains(query) ||
-                    produk.kodeProduk.toLowerCase().contains(query);
-              }).toList();
-    });
-  }
-
-  void _tambahAtauUpdateProduk(BuildContext ctx) async {
-    final produkProvider = Provider.of<ProdukProvider>(ctx, listen: false);
+  void _tambahAtauUpdateProduk(BuildContext dialogContext) async {
+    final produkProvider = Provider.of<ProdukProvider>(
+      dialogContext,
+      listen: false,
+    );
 
     final kode = _kodeController.text.trim();
     final nama = _namaController.text.trim();
@@ -79,7 +54,8 @@ class _ProdukScreenState extends State<ProdukScreen> {
     final stokMin = int.tryParse(_stokMinController.text.trim()) ?? 0;
     final satuanDetail = _satuanDetailController.text.trim();
     final satuanFinal =
-        '$_selectedSatuanPokok ${satuanDetail.isNotEmpty ? '($satuanDetail)' : ''}';
+        '$_selectedSatuanPokok ${satuanDetail.isNotEmpty ? '($satuanDetail)' : ''}'
+            .trim();
 
     if (kode.isEmpty ||
         nama.isEmpty ||
@@ -89,7 +65,7 @@ class _ProdukScreenState extends State<ProdukScreen> {
         _selectedKategori!.isEmpty) {
       Get.snackbar(
         'Error',
-        'Pastikan semua data produk (Kode, Nama, Harga Beli, Harga Jual, Kategori) terisi dengan benar!',
+        'Pastikan semua data (Kode, Nama, Harga Beli, Harga Jual, Kategori) terisi.',
         backgroundColor: Colors.orange.shade200,
         snackPosition: SnackPosition.BOTTOM,
       );
@@ -98,45 +74,48 @@ class _ProdukScreenState extends State<ProdukScreen> {
 
     try {
       if (_produkToEdit == null) {
-        final newProduk = Produk(
-          id: '',
-          kodeProduk: kode,
-          nama: nama,
-          deskripsi: deskripsi,
-          kategori: kategori,
-          hargaBeli: hargaBeli,
-          hargaJual: hargaJual,
-          stok: stok,
-          stokMinimum: stokMin,
-          satuan: satuanFinal,
+        await produkProvider.tambahProduk(
+          Produk(
+            id: '',
+            kodeProduk: kode,
+            nama: nama,
+            deskripsi: deskripsi,
+            kategori: kategori,
+            hargaBeli: hargaBeli,
+            hargaJual: hargaJual,
+            stok: stok,
+            stokMinimum: stokMin,
+            satuan: satuanFinal,
+          ),
         );
-        await produkProvider.tambahProduk(newProduk);
-        ScaffoldMessenger.of(ctx).showSnackBar(
-          const SnackBar(content: Text('Produk berhasil ditambahkan!')),
+        Get.snackbar(
+          'Sukses',
+          'Produk berhasil ditambahkan!',
+          backgroundColor: Colors.green.shade200,
         );
       } else {
-        final updatedProduk = Produk(
-          id: _produkToEdit!.id,
-          kodeProduk: kode,
-          nama: nama,
-          deskripsi: deskripsi,
-          kategori: kategori,
-          hargaBeli: hargaBeli,
-          hargaJual: hargaJual,
-          stok: stok,
-          stokMinimum: stokMin,
-          satuan: satuanFinal,
+        await produkProvider.updateProduk(
+          Produk(
+            id: _produkToEdit!.id,
+            kodeProduk: kode,
+            nama: nama,
+            deskripsi: deskripsi,
+            kategori: kategori,
+            hargaBeli: hargaBeli,
+            hargaJual: hargaJual,
+            stok: stok,
+            stokMinimum: stokMin,
+            satuan: satuanFinal,
+            isActive: _produkToEdit!.isActive,
+          ),
         );
-        await produkProvider.updateProduk(updatedProduk);
-        ScaffoldMessenger.of(ctx).showSnackBar(
-          const SnackBar(content: Text('Produk berhasil diperbarui!')),
+        Get.snackbar(
+          'Sukses',
+          'Produk berhasil diperbarui!',
+          backgroundColor: Colors.green.shade200,
         );
       }
-      // Panggil fetchProduk() untuk memastikan data terbaru dimuat dari DB
-      await produkProvider.fetchProduk();
-      // Kemudian panggil _filterProduk untuk memperbarui tampilan setelah data baru diambil
-      _filterProduk();
-      Navigator.of(ctx).pop();
+      Navigator.of(dialogContext).pop();
     } catch (e) {
       Get.snackbar(
         'Error',
@@ -147,37 +126,51 @@ class _ProdukScreenState extends State<ProdukScreen> {
     }
   }
 
-  void _hapusProduk(String id) async {
-    final produkProvider = Provider.of<ProdukProvider>(context, listen: false);
-    try {
-      await produkProvider.hapusProduk(id);
-      // Panggil fetchProduk() untuk memastikan data terbaru dimuat dari DB
-      await produkProvider.fetchProduk();
-      _filterProduk(); // Perbarui tampilan setelah data baru diambil
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Produk berhasil dihapus!')));
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Gagal menghapus produk: $e',
-        backgroundColor: Colors.red.shade200,
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    }
+  void _hapusProduk(String id, String namaProduk) {
+    Get.defaultDialog(
+      title: 'Hapus Produk',
+      middleText:
+          'Anda yakin ingin menghapus produk "$namaProduk"? Tindakan ini akan menonaktifkannya dari daftar.',
+      actions: [
+        TextButton(onPressed: () => Get.back(), child: const Text('Batal')),
+        ElevatedButton(
+          onPressed: () async {
+            Get.back();
+            try {
+              await Provider.of<ProdukProvider>(
+                context,
+                listen: false,
+              ).hapusProduk(id);
+              Get.snackbar(
+                'Sukses',
+                'Produk "$namaProduk" berhasil dinonaktifkan.',
+                backgroundColor: Colors.green.shade200,
+              );
+            } catch (e) {
+              Get.snackbar(
+                'Error',
+                'Gagal menghapus produk: $e',
+                backgroundColor: Colors.red.shade200,
+              );
+            }
+          },
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+          child: const Text('Hapus', style: TextStyle(color: Colors.white)),
+        ),
+      ],
+    );
   }
 
   void _showFormProduk({Produk? produk}) {
     _produkToEdit = produk;
+
     _kodeController.text = produk?.kodeProduk ?? '';
     _namaController.text = produk?.nama ?? '';
     _deskripsiController.text = produk?.deskripsi ?? '';
     _selectedKategori =
         produk?.kategori.isNotEmpty == true ? produk!.kategori : null;
 
-    if (produk != null &&
-        produk.satuan.contains('(') &&
-        produk.satuan.contains(')')) {
+    if (produk != null && produk.satuan.contains('(')) {
       final parts = produk.satuan.split('(');
       _selectedSatuanPokok = parts[0].trim();
       _satuanDetailController.text = parts[1].replaceAll(')', '').trim();
@@ -189,8 +182,8 @@ class _ProdukScreenState extends State<ProdukScreen> {
 
     _hargaBeliController.text = produk?.hargaBeli.toStringAsFixed(0) ?? '';
     _hargaJualController.text = produk?.hargaJual.toStringAsFixed(0) ?? '';
-    _stokController.text = produk?.stok.toString() ?? '';
-    _stokMinController.text = produk?.stokMinimum.toString() ?? '';
+    _stokController.text = produk?.stok.toString() ?? '0';
+    _stokMinController.text = produk?.stokMinimum.toString() ?? '0';
 
     showDialog(
       context: context,
@@ -227,36 +220,23 @@ class _ProdukScreenState extends State<ProdukScreen> {
                           decoration: const InputDecoration(
                             labelText: 'Kategori',
                           ),
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'Sembako',
-                              child: Text('Sembako'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'Minuman',
-                              child: Text('Minuman'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'Makanan Ringan',
-                              child: Text('Makanan Ringan'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'Alat Kebersihan',
-                              child: Text('Alat Kebersihan'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'Rokok',
-                              child: Text('Rokok'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'Kesehatan',
-                              child: Text('Kesehatan'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'Aksesoris',
-                              child: Text('Aksesoris'),
-                            ),
-                          ],
+                          items:
+                              const [
+                                    'Sembako',
+                                    'Minuman',
+                                    'Makanan Ringan',
+                                    'Alat Kebersihan',
+                                    'Rokok',
+                                    'Kesehatan',
+                                    'Aksesoris',
+                                  ]
+                                  .map(
+                                    (e) => DropdownMenuItem(
+                                      value: e,
+                                      child: Text(e),
+                                    ),
+                                  )
+                                  .toList(),
                           onChanged:
                               (value) => setStateDialog(
                                 () => _selectedKategori = value,
@@ -279,7 +259,10 @@ class _ProdukScreenState extends State<ProdukScreen> {
                         TextField(
                           controller: _stokController,
                           keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(labelText: 'Stok'),
+                          decoration: const InputDecoration(
+                            labelText: 'Stok Awal',
+                          ),
+                          enabled: produk == null,
                         ),
                         TextField(
                           controller: _stokMinController,
@@ -293,14 +276,23 @@ class _ProdukScreenState extends State<ProdukScreen> {
                           decoration: const InputDecoration(
                             labelText: 'Satuan Pokok',
                           ),
-                          items: const [
-                            DropdownMenuItem(value: 'Pcs', child: Text('Pcs')),
-                            DropdownMenuItem(value: 'Kg', child: Text('Kg')),
-                            DropdownMenuItem(
-                              value: 'Liter',
-                              child: Text('Liter'),
-                            ),
-                          ],
+                          items:
+                              const [
+                                    'Pcs',
+                                    'Kg',
+                                    'Liter',
+                                    'Bungkus',
+                                    'Sachet',
+                                    'Dus',
+                                    'Pak',
+                                  ]
+                                  .map(
+                                    (e) => DropdownMenuItem(
+                                      value: e,
+                                      child: Text(e),
+                                    ),
+                                  )
+                                  .toList(),
                           onChanged:
                               (value) => setStateDialog(
                                 () => _selectedSatuanPokok = value!,
@@ -309,7 +301,7 @@ class _ProdukScreenState extends State<ProdukScreen> {
                         TextField(
                           controller: _satuanDetailController,
                           decoration: const InputDecoration(
-                            labelText: 'Detail Satuan (mis: botol, unit, grm)',
+                            labelText: 'Detail Satuan (opsional)',
                           ),
                         ),
                       ],
@@ -330,73 +322,8 @@ class _ProdukScreenState extends State<ProdukScreen> {
     );
   }
 
-  void _showUpdateStokDialog(Produk produk) {
-    final TextEditingController stokUpdateController = TextEditingController(
-      text: produk.stok.toString(),
-    );
-    showDialog(
-      context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: Text('Perbarui Stok ${produk.nama}'),
-            content: TextField(
-              controller: stokUpdateController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Stok Baru'),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Batal'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  final newStok =
-                      int.tryParse(stokUpdateController.text.trim()) ??
-                      produk.stok;
-                  if (newStok < 0) {
-                    Get.snackbar(
-                      'Error',
-                      'Stok tidak bisa negatif.',
-                      backgroundColor: Colors.red.shade200,
-                    );
-                    return;
-                  }
-                  try {
-                    await Provider.of<ProdukProvider>(
-                      context,
-                      listen: false,
-                    ).updateStok(produk.id, newStok);
-                    // Panggil fetchProduk() untuk memastikan data terbaru dimuat dari DB
-                    await Provider.of<ProdukProvider>(
-                      context,
-                      listen: false,
-                    ).fetchProduk();
-                    _filterProduk(); // Perbarui tampilan setelah data baru diambil
-                    Navigator.of(ctx).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Stok berhasil diperbarui!'),
-                      ),
-                    );
-                  } catch (e) {
-                    Get.snackbar(
-                      'Error',
-                      'Gagal memperbarui stok: $e',
-                      backgroundColor: Colors.red.shade200,
-                    );
-                  }
-                },
-                child: const Text('Perbarui'),
-              ),
-            ],
-          ),
-    );
-  }
-
   @override
   void dispose() {
-    _searchController.removeListener(_filterProduk);
     _searchController.dispose();
     _kodeController.dispose();
     _namaController.dispose();
@@ -412,123 +339,167 @@ class _ProdukScreenState extends State<ProdukScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          controller: _searchController,
-          decoration: InputDecoration(
-            hintText: 'Cari produk...',
-            prefixIcon: const Icon(Icons.search),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide.none,
-            ),
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showFormProduk(),
-          ),
-        ],
+      floatingActionButton: FloatingActionButton(
+        // --- PERBAIKAN DI SINI ---
+        heroTag: 'produkFab',
+        onPressed: () => _showFormProduk(),
+        tooltip: 'Tambah Produk',
+        child: const Icon(Icons.add),
       ),
-      body: Consumer<ProdukProvider>(
-        builder: (context, produkProvider, child) {
-          if (produkProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (_filteredProdukList.isEmpty &&
-              _searchController.text.isEmpty) {
-            return const Center(child: Text('Tidak ada produk tersedia.'));
-          } else if (_filteredProdukList.isEmpty &&
-              _searchController.text.isNotEmpty) {
-            return const Center(
-              child: Text('Tidak ada produk yang cocok dengan pencarian Anda.'),
-            );
-          }
-          return ListView.builder(
-            itemCount: _filteredProdukList.length,
-            itemBuilder: (context, index) {
-              final produk = _filteredProdukList[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        produk.nama,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Cari berdasarkan nama atau kode...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: Consumer<ProdukProvider>(
+                builder: (context, produkProvider, child) {
+                  final String query = _searchController.text.toLowerCase();
+                  final List<Produk> filteredList =
+                      produkProvider.produkList.where((produk) {
+                        final namaMatch = produk.nama.toLowerCase().contains(
+                          query,
+                        );
+                        final kodeMatch = produk.kodeProduk
+                            .toLowerCase()
+                            .contains(query);
+                        return namaMatch || kodeMatch;
+                      }).toList();
+
+                  if (produkProvider.isLoading &&
+                      produkProvider.produkList.isEmpty) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (produkProvider.produkList.isEmpty) {
+                    return Center(
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Tidak ada produk. Refresh?'),
+                        onPressed: () => produkProvider.forceFetchProduk(),
                       ),
-                      Text('Kode: ${produk.kodeProduk}'),
-                      Text('Kategori: ${produk.kategori}'),
-                      Text(
-                        'Harga Beli: Rp${NumberFormat.currency(locale: 'id', symbol: '', decimalDigits: 0).format(produk.hargaBeli)}',
+                    );
+                  }
+
+                  if (filteredList.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'Tidak ada produk yang cocok dengan pencarian.',
                       ),
-                      Text(
-                        'Harga Jual: Rp${NumberFormat.currency(locale: 'id', symbol: '', decimalDigits: 0).format(produk.hargaJual)}',
-                      ),
-                      Text('Stok: ${produk.stok} ${produk.satuan}'),
-                      Text('Stok Minimum: ${produk.stokMinimum}'),
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: () => _showFormProduk(produk: produk),
-                            ),
-                            // Perbarui stok: Hapus 2 tombol ini, ganti dengan satu tombol stok yang jelas
-                            IconButton(
-                              icon: const Icon(
-                                Icons.inventory,
-                              ), // Icon yang lebih relevan untuk stok
-                              onPressed: () => _showUpdateStokDialog(produk),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete),
-                              onPressed: () {
-                                Get.defaultDialog(
-                                  title: 'Hapus Produk',
-                                  middleText:
-                                      'Anda yakin ingin menghapus produk "${produk.nama}"?',
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Get.back(),
-                                      child: const Text('Batal'),
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        _hapusProduk(produk.id);
-                                        Get.back();
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red,
+                    );
+                  }
+
+                  return RefreshIndicator(
+                    onRefresh: () => produkProvider.forceFetchProduk(),
+                    child: ListView.builder(
+                      itemCount: filteredList.length,
+                      itemBuilder: (context, index) {
+                        final produk = filteredList[index];
+                        final stokHabis = produk.stok <= 0;
+                        final stokMenipis =
+                            produk.stok > 0 &&
+                            produk.stok <= produk.stokMinimum;
+                        return Card(
+                          color:
+                              stokHabis
+                                  ? Colors.red[100]
+                                  : (stokMenipis ? Colors.orange[100] : null),
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  produk.nama,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Kode: ${produk.kodeProduk} | Kategori: ${produk.kategori}',
+                                ),
+                                const Divider(),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'Harga Jual: Rp${NumberFormat.currency(locale: 'id', symbol: '', decimalDigits: 0).format(produk.hargaJual)}',
                                       ),
-                                      child: const Text(
-                                        'Hapus',
-                                        style: TextStyle(color: Colors.white),
+                                    ),
+                                    Text(
+                                      'Stok: ${produk.stok} ${produk.satuan}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ],
-                                );
-                              },
+                                ),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Wrap(
+                                    spacing: -8,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.edit,
+                                          color: Colors.blue,
+                                        ),
+                                        onPressed:
+                                            () =>
+                                                _showFormProduk(produk: produk),
+                                        tooltip: 'Edit Produk',
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.delete,
+                                          color: Colors.red,
+                                        ),
+                                        onPressed:
+                                            () => _hapusProduk(
+                                              produk.id,
+                                              produk.nama,
+                                            ),
+                                        tooltip: 'Hapus Produk',
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
-        },
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
